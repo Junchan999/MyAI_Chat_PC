@@ -61,7 +61,10 @@
         .chat-history-list-footer button,
         .sort-controls button,
         #save-edited-message-button,
-        #download-pdf-button {
+        #download-pdf-button,
+        /* ★画面構成改善ここから★ */
+        .tab-button { /* タブボタンも基本スタイルを適用 */
+        /* ★画面構成改善ここまで★ */
             padding: 10px 18px; /* Slightly more padding */
             border: none;
             color: white;
@@ -84,7 +87,10 @@
         .chat-history-list-footer button:hover,
         .sort-controls button:hover,
         #save-edited-message-button:hover,
-        #download-pdf-button:hover {
+        #download-pdf-button:hover,
+        /* ★画面構成改善ここから★ */
+        .tab-button:hover { /* タブボタンもホバー効果適用 */
+        /* ★画面構成改善ここまで★ */
             opacity: 0.95;
             transform: translateY(-3px); /* Slightly more lift */
             box-shadow: 0 6px 12px rgba(0,0,0,0.2); /* Deeper shadow on hover */
@@ -231,9 +237,7 @@
             gap: 10px; 
             margin-bottom: 8px; 
             flex-wrap: wrap;
-            /* ★ここから変更★ */
             align-items: flex-end; /* ボタンを下揃えに */
-            /* ★ここまで変更★ */
         }
         #text-input {
             flex-grow: 1; 
@@ -245,9 +249,7 @@
             resize: vertical;
             font-family: inherit; 
             font-size: 1em;
-            /* ★ここから変更★ */
             min-height: 120px; /* デフォルトで大きくする */
-            /* ★ここまで変更★ */
         }
         #text-input:focus {
             outline: none; border-color: #4CAF50;
@@ -281,37 +283,6 @@
         #mic-button.recording { background-color: #dc3545; } /* Danger red when recording */
         #send-button { background-color: #6f42c1; } /* Purple for send */
 
-        /* 絵文字ボタンコンテナ (削除したのでコメントアウトまたは削除) */
-        /*
-        .emoji-buttons-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 8px;
-        }
-        .emoji-button {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: 1px solid #ccc;
-            background-color: #f8f8f8;
-            color: #333;
-            cursor: pointer;
-            font-size: 1.4em;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        .emoji-button:hover {
-            background-color: #e8e8e8;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-        }
-        */
-
-
         /* モーダル共通スタイル */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
         .modal-content {
@@ -321,6 +292,12 @@
             max-height: 95vh;
         }
         #settings-modal .modal-content { max-width: 500px; }
+        /* ★画面構成改善ここから★ */
+        #persona-modal .modal-content {
+            max-width: 90vw; /* PC画面幅の90%に拡大 */
+        }
+        /* ★画面構成改善ここまで★ */
+
         .modal-body { overflow-y: auto; padding-right: 10px; }
         .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .modal-content h2 { margin-top: 0; flex-shrink: 0; }
@@ -333,15 +310,27 @@
             width: 100%; margin-top: 10px; box-sizing: border-box; border-radius: 4px;
             border: 1px solid #ccc; padding: 8px; font-family: inherit;
         }
-        #persona-textarea { height: 200px; resize: vertical; }
-        #summary-prompt-textarea { height: 150px; resize: vertical; }
+        /* ★画面構成改善ここから★ テキストエリアのデフォルト高さを調整 */
+        #persona-textarea { height: 250px; resize: vertical; }
+        #summary-prompt-textarea { height: 200px; resize: vertical; }
+        /* ★画面構成改善ここまで★ */
         #api-key-input { height: auto; }
 
         .examples-container { margin-top: 10px; }
         .examples-container button { margin-right: 5px; margin-bottom: 5px; }
         .modal-buttons { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 20px; flex-shrink: 0; }
-        .settings-columns { display: flex; gap: 25px; }
-        .settings-column { flex: 1; }
+        /* ★画面構成改善ここから★ カラム間の間隔を調整 */
+        .settings-columns { 
+            display: flex; 
+            gap: 30px; /* 間隔を広げる */
+            flex-wrap: wrap; /* レスポンシブ対応 */
+            justify-content: space-between; /* 両端揃え */
+        }
+        .settings-column { 
+            flex: 1; 
+            min-width: 320px; /* ある程度の最小幅を確保 */
+        }
+        /* ★画面構成改善ここまで★ */
 
         .sound-settings div {
             margin-bottom: 10px;
@@ -457,7 +446,7 @@
         #export-all-history-button {
             background-color: #20c997; /* A vibrant green-teal for global export */
         }
-        #import-csv-input, #import-all-history-input {
+        #import-csv-input, #import-all-history-input, #import-md-input {
             display: none;
         }
 
@@ -496,24 +485,64 @@
             vertical-align: middle;
         }
 
-        /* #side-panel #storage-info-panel {
-            padding-top: 15px;
-            border-top: 1px solid rgba(0, 0, 0, 0.08); 
-            margin-top: auto; 
-            background-color: rgba(255, 255, 255, 0.5); 
-            border-radius: 8px; 
-            padding: 15px; 
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05); 
-            text-align: left; 
+        /* ★画面構成改善ここから★ タブナビゲーションのスタイル */
+        .tab-navigation {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* 小さい画面でタブを折り返す */
+            gap: 5px;
         }
-        #side-panel #storage-info-panel h3 {
-            font-size: 1.1em;
-            margin-bottom: 8px;
-            text-align: left; 
+
+        .tab-button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #f0f0f0;
+            color: #555;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            box-shadow: none; /* 全体ボタンの影を上書き */
+            margin-right: -1px; /* ボーダーを少し重ねる */
+            min-width: unset; /* デフォルトのmin-widthをリセット */
+        }
+
+        .tab-button:hover {
+            background-color: #e0e0e0;
+            color: #333;
+            transform: none; /* ホバー時の浮き上がり効果を削除 */
+            box-shadow: none;
+            z-index: 1; /* ホバーしたタブが手前に来るように */
+        }
+
+        .tab-button.active {
+            background-color: #fff;
             color: #2e8b57;
-            border-bottom: none; 
-            padding-bottom: 0;
-        } */
+            border-color: #2e8b57;
+            border-bottom-color: #fff; /* アクティブタブの下線を見えなくする */
+            position: relative;
+            z-index: 2; /* アクティブタブを常に手前に */
+        }
+
+        /* タブコンテンツのスタイル */
+        .tab-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px; /* スクロールバーのためのパディング */
+        }
+
+        .tab-pane {
+            display: none; /* デフォルトでは非表示 */
+            padding: 10px 0; /* ペイン内のコンテンツのためのパディング */
+        }
+
+        .tab-pane.active {
+            display: block; /* アクティブなペインを表示 */
+        }
+        /* ★画面構成改善ここまで★ */
 
 
         /* 既存のブレークポイントは維持しつつ、モバイル向けに強化 */
@@ -591,25 +620,9 @@
             }
 
             /* 入力エリアの調整 */
-            /* 絵文字ボタン削除に伴い、ここは不要 */
-            /*
-            .emoji-button {
-                width: 38px;
-                height: 38px;
-                font-size: 1.2em;
-            }
-            */
-            #file-input-button, #mic-button, #send-button {
-                width: 44px; /* Slightly smaller for mobile */
-                height: 44px;
-                font-size: 1.4em;
-                line-height: 44px;
-            }
-            /* ★ここから変更★ */
             #text-input {
                 min-height: 100px; /* モバイルで入力欄を大きく */
             }
-            /* ★ここまで変更★ */
 
             /* モーダルの調整 */
             .modal-content {
@@ -627,6 +640,22 @@
             .modal-body {
                 padding-right: 0;
             }
+            /* ★画面構成改善ここから★ モバイル時のタブ表示調整 */
+            .tab-navigation {
+                flex-direction: column; /* タブを縦に積む */
+                align-items: stretch;
+            }
+            .tab-button {
+                border-radius: 8px; /* 積まれたタブは角丸を保持 */
+                margin-right: 0;
+                margin-bottom: 5px;
+                border-bottom: 1px solid #ddd; /* 下線も表示 */
+            }
+            .tab-button.active {
+                border-bottom: 1px solid #2e8b57; /* アクティブタブは下線を強調 */
+            }
+            /* ★画面構成改善ここまで★ */
+
             .settings-columns {
                 flex-direction: column;
                 gap: 15px;
@@ -712,14 +741,6 @@
             .message {
                 max-width: 95%;
             }
-            /* 絵文字ボタン削除に伴い、ここは不要 */
-            /*
-            .emoji-button {
-                width: 35px;
-                height: 35px;
-                font-size: 1.1em;
-            }
-            */
             #file-input-button, #mic-button, #send-button {
                 width: 40px;
                 height: 40px;
@@ -816,6 +837,7 @@
 <input type="file" id="image-file-input" style="display: none;" accept="image/*">
 <input type="file" id="import-csv-input" style="display: none;" accept=".csv">
 <input type="file" id="import-all-history-input" style="display: none;" accept=".json">
+<input type="file" id="import-md-input" style="display: none;" accept=".md">
 
 
 <div class="main-container">
@@ -839,12 +861,6 @@
                 <textarea id="text-input" placeholder="メッセージを入力または画像をペースト... (Shift+Enterで改行)"></textarea>
             </div>
         </div>
-        <!-- ストレージ情報パネルを削除 -->
-        <!-- <div id="storage-info-panel">
-            <h3 style="margin-top: 0; margin-bottom: 5px;">ストレージ情報</h3>
-            <p id="local-storage-usage-display">ローカルストレージ使用量: 計算中...</p>
-            <p style="font-size: 0.8em; color: #777; margin-top: 5px;">※ ブラウザのローカルストレージは約5MBが一般的です。</p>
-        </div> -->
         <p style="font-size: 0.8em; color: #777; margin-top: 10px; text-align: center;">※ チャット履歴と設定はPCファイルで保存・読込されます。</p>
         <p style="font-size: 0.8em; color: #777; margin-top: 5px; text-align: center;">※ APIキーはセッションごとに入力が必要です。</p>
     </div>
@@ -855,96 +871,132 @@
     <div class="modal-content">
         <span class="close-button" id="close-persona-modal">&times;</span>
         <h2>各種設定</h2>
-        <h3 style="margin-top:0;">全チャット履歴のエクスポート/インポート</h3>
-        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-            「全履歴をJSONで保存」で全てのチャット履歴をファイルに保存し、「全履歴をJSONから読込」で保存したファイルを読み込みます。<br>
-            これにより、アプリ起動時に履歴が表示されるようになります。
-        </p>
-        <div class="csv-buttons-container">
-            <button id="export-all-history-button" style="background-color: #20c997;">全履歴をJSONで保存</button>
-            <label for="import-all-history-input" style="background-color: #6f42c1;">全履歴をJSONから読込</label>
+
+        <!-- ★画面構成改善ここから★ タブナビゲーションを追加 -->
+        <div class="tab-navigation">
+            <button class="tab-button active" data-tab="history-file-management">履歴ファイル管理</button>
+            <button class="tab-button" data-tab="ai-response-settings">AI応答設定</button>
+            <button class="tab-button" data-tab="app-behavior-settings">アプリ動作設定</button>
         </div>
-        <hr style="margin-top:20px; border-top:1px dashed #eee;">
 
-        <div class="modal-body">
-            <div class="settings-columns">
-                <div class="settings-column">
-                    <h3>AIの性格（システムプロンプト）</h3>
-                    <p>AIの振る舞いを指定する指示を入力してください。</p>
-                    <textarea id="persona-textarea" placeholder="例：あなたは親切でフレンドリーなアシスタントです。絵文字をたくさん使って、ユーザーを励ましてください。"></textarea>
-                    <div class="examples-container">
-                        <p>設定例:</p>
-                        <button class="persona-example-btn" data-persona="あなたはユーザーをサポートする、親切で優しいアシスタントです。常に丁寧な言葉遣いを心がけてください。">優しいアシスタント</button>
-                        <button class="persona-example-btn" data-persona="あなたは特定の分野の専門家です。質問に対して、専門用語を交えつつ、常に簡潔かつ正確に答えてください。">簡潔な専門家</button>
-                        <button class="persona-example-btn" data-persona="あんたは関西弁を話す、気さくな友達やで。タメ口で、たまに冗談を交えながら返事してな。">関西弁の友達</button>
-                    </div>
+        <div class="modal-body tab-body">
+            <!-- 履歴ファイル管理 Pane -->
+            <div id="history-file-management" class="tab-pane active">
+                <h3>全チャット履歴のエクスポート/インポート</h3>
+                <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                    「全履歴をJSONで保存」で全てのチャット履歴をファイルに保存し、「全履歴をJSONから読込」で保存したファイルを読み込みます。<br>
+                    これにより、アプリ起動時に履歴が表示されるようになります。
+                </p>
+                <div class="csv-buttons-container">
+                    <button id="export-all-history-button" style="background-color: #20c997;">全履歴をJSONで保存</button>
+                    <label for="import-all-history-input" style="background-color: #6f42c1;">全履歴をJSONから読込</label>
                 </div>
-                <div class="settings-column">
-                    <h3>チャット概要生成プロンプト</h3>
-                    <p>チャット保存時の概要生成AIへの指示です。<br><code>{CONVERSATION_HISTORY}</code>に会話履歴が挿入されます。</p>
-                    <textarea id="summary-prompt-textarea" placeholder="例：以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  &quot;title&quot;: &quot;ここにタイトルを記述 (15文字程度)&quot;,\n  &quot;summary&quot;: &quot;ここに会話の要約を記述 (第三者の視点から自然な文章で)&quot;\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---"></textarea>
-                    <button id="reset-summary-prompt-button" style="margin-top: 10px; background-color: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.15); white-space: nowrap;">デフォルトに戻す</button>
+                <hr style="margin-top:20px; border-top:1px dashed #eee;">
 
-                    <h3>会話履歴の名前設定</h3>
-                    <div class="name-setting-container" style="margin-bottom: 10px;">
-                        <label for="user-name-input">あなたの名前:</label>
-                        <input type="text" id="user-name-input" placeholder="ユーザー">
-                    </div>
-                    <div class="name-setting-container">
-                        <label for="ai-name-input">AIの名前:</label>
-                        <input type="text" id="ai-name-input" placeholder="AI">
-                    </div>
+                <h3>MDファイルからのチャット履歴インポート</h3>
+                <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                    「チャット保存」で作成したMarkdown (.md) ファイルを読み込み、履歴リストに追加します。
+                </p>
+                <div class="csv-buttons-container">
+                    <label for="import-md-input" id="import-md-button" style="background-color: #6f42c1;">MDファイルを読込</label>
+                </div>
+            </div>
 
-                    <h3>サウンド設定</h3>
-                    <div class="sound-settings">
-                        <div>
-                            <input type="checkbox" id="sound-on-off" checked>
-                            <label for="sound-on-off">AI応答時にサウンドを鳴らす</label>
+            <!-- AI応答設定 Pane -->
+            <div id="ai-response-settings" class="tab-pane">
+                <div class="settings-columns">
+                    <div class="settings-column">
+                        <h3>AIの性格（システムプロンプト）</h3>
+                        <p>AIの振る舞いを指定する指示を入力してください。</p>
+                        <textarea id="persona-textarea" placeholder="例：あなたは親切でフレンドリーなアシスタントです。絵文字をたくさん使って、ユーザーを励ましてください。"></textarea>
+                        <div class="examples-container">
+                            <p>設定例:</p>
+                            <button class="persona-example-btn" data-persona="あなたはユーザーをサポートする、親切で優しいアシスタントです。常に丁寧な言葉遣いを心がけてください。">優しいアシスタント</button>
+                            <button class="persona-example-btn" data-persona="あなたは特定の分野の専門家です。質問に対して、専門用語を交えつつ、常に簡潔かつ正確に答えてください。">簡潔な専門家</button>
+                            <button class="persona-example-btn" data-persona="あんたは関西弁を話す、気さくな友達やで。タメ口で、たまに冗談を交えながら返事してな。">関西弁の友達</button>
                         </div>
-                        <div>
-                            <label for="sound-type-select">サウンドの種類:</label>
-                            <select id="sound-type-select">
-                                <option value="sine">サイン波 (標準)</option>
-                                <option value="square">矩形波 (ピコピコ)</option>
-                                <option value="sawtooth">のこぎり波 (ブザー)</option>
-                                <option value="triangle">三角波 (マイルド)</option>
-                            </select>
+                    </div>
+                    <div class="settings-column">
+                        <h3>チャット概要生成プロンプト</h3>
+                        <p>チャット保存時の概要生成AIへの指示です。<br><code>{CONVERSATION_HISTORY}</code>に会話履歴が挿入されます。</p>
+                        <textarea id="summary-prompt-textarea" placeholder="例：以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  &quot;title&quot;: &quot;ここにタイトルを記述 (15文字程度)&quot;,\n  &quot;summary&quot;: &quot;ここに会話の要約を記述 (第三者の視点から自然な文章で)&quot;\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---"></textarea>
+                        <button id="reset-summary-prompt-button" style="margin-top: 10px; background-color: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.15); white-space: nowrap;">デフォルトに戻す</button>
+
+                        <h3>会話履歴の名前設定</h3>
+                        <div class="name-setting-container" style="margin-bottom: 10px;">
+                            <label for="user-name-input">あなたの名前:</label>
+                            <input type="text" id="user-name-input" placeholder="ユーザー">
                         </div>
-                        <div style="margin-top: 15px;">
-                            <input type="checkbox" id="tts-on-off" checked>
-                            <label for="tts-on-off">AI応答を音声で読み上げる</label>
-                        </div>
-                        <div>
-                            <label for="tts-voice-select">音声の種類:</label>
-                            <select id="tts-voice-select"></select>
-                        </div>
-                        <div>
-                            <label for="tts-rate-input">速度:</label>
-                            <input type="range" id="tts-rate-input" min="0.1" max="2" step="0.1" value="1">
-                            <span id="tts-rate-value">1.0</span>
-                        </div>
-                        <div>
-                            <label for="tts-pitch-input">ピッチ:</label>
-                            <input type="range" id="tts-pitch-input" min="0" max="2" step="0.1" value="1">
-                            <span id="tts-pitch-value">1.0</span>
-                        </div>
-                        <div>
-                            <label for="tts-volume-input">音量:</label>
-                            <input type="range" id="tts-volume-input" min="0" max="1" step="0.1" value="1">
-                            <span id="tts-volume-value">1.0</span>
+                        <div class="name-setting-container">
+                            <label for="ai-name-input">AIの名前:</label>
+                            <input type="text" id="ai-name-input" placeholder="AI">
                         </div>
                     </div>
                 </div>
             </div>
-            <p style="font-size: 0.9em; color: #666; margin-top: 20px; margin-bottom: 10px;">
-                「設定をCSVで保存」で上記設定をファイルに保存し、「設定をCSVから読込」で保存したファイルを読み込みます。<br>
-                これにより、アプリ起動時に設定が反映されるようになります。
-            </p>
-            <div class="csv-buttons-container">
-                <button id="export-csv-button" style="background-color: #6f42c1;">設定をCSVで保存</button>
-                <label for="import-csv-input" id="import-csv-button" style="background-color: #6f42c1;">設定をCSVから読込</label>
+
+            <!-- アプリ動作設定 Pane -->
+            <div id="app-behavior-settings" class="tab-pane">
+                <div class="settings-columns">
+                    <div class="settings-column">
+                        <h3>サウンド設定</h3>
+                        <div class="sound-settings">
+                            <div>
+                                <input type="checkbox" id="sound-on-off" checked>
+                                <label for="sound-on-off">AI応答時にサウンドを鳴らす</label>
+                            </div>
+                            <div>
+                                <label for="sound-type-select">サウンドの種類:</label>
+                                <select id="sound-type-select">
+                                    <option value="sine">サイン波 (標準)</option>
+                                    <option value="square">矩形波 (ピコピコ)</option>
+                                    <option value="sawtooth">のこぎり波 (ブザー)</option>
+                                    <option value="triangle">三角波 (マイルド)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-column">
+                        <div class="sound-settings" style="margin-top: 0;">
+                            <div>
+                                <input type="checkbox" id="tts-on-off" checked>
+                                <label for="tts-on-off">AI応答を音声で読み上げる</label>
+                            </div>
+                            <div>
+                                <label for="tts-voice-select">音声の種類:</label>
+                                <select id="tts-voice-select"></select>
+                            </div>
+                            <div>
+                                <label for="tts-rate-input">速度:</label>
+                                <input type="range" id="tts-rate-input" min="0.1" max="2" step="0.1" value="1">
+                                <span id="tts-rate-value">1.0</span>
+                            </div>
+                            <div>
+                                <label for="tts-pitch-input">ピッチ:</label>
+                                <input type="range" id="tts-pitch-input" min="0" max="2" step="0.1" value="1">
+                                <span id="tts-pitch-value">1.0</span>
+                            </div>
+                            <div>
+                                <label for="tts-volume-input">音量:</label>
+                                <input type="range" id="tts-volume-input" min="0" max="1" step="0.1" value="1">
+                                <span id="tts-volume-value">1.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr style="margin-top:20px; border-top:1px dashed #eee;">
+                <p style="font-size: 0.9em; color: #666; margin-top: 20px; margin-bottom: 10px;">
+                    「設定をCSVで保存」で上記設定をファイルに保存し、「設定をCSVから読込」で保存したファイルを読み込みます。<br>
+                    これにより、アプリ起動時に設定が反映されるようになります。
+                </p>
+                <div class="csv-buttons-container">
+                    <button id="export-csv-button" style="background-color: #6f42c1;">設定をCSVで保存</button>
+                    <label for="import-csv-input" id="import-csv-button" style="background-color: #6f42c1;">設定をCSVから読込</label>
+                </div>
             </div>
         </div>
+        <!-- ★画面構成改善ここまで★ -->
+
         <div class="modal-buttons">
             <div></div>
             <div class="right-buttons">
@@ -962,9 +1014,7 @@
         <div class="modal-body">
             <p>ここに取得したGemini APIキーを入力して、セッション中に利用してください。</p>
             <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                <!-- 変更ここから -->
                 ※ APIキーはブラウザに保存できますが、セキュリティのために手動入力またはCSVでの設定インポートをお勧めします。保存した場合でも、ブラウザのキャッシュをクリアすると削除されます。
-                <!-- 変更ここまで -->
             </p>
             <input type="password" id="api-key-input" placeholder="APIキーを入力...">
             <div id="test-key-result"></div>
@@ -1099,6 +1149,9 @@
     const exportAllHistoryButton = document.getElementById('export-all-history-button');
     const importAllHistoryInput = document.getElementById('import-all-history-input');
     
+    // MDファイルインポート関連
+    const importMdInput = document.getElementById('import-md-input');
+    
     // メッセージ編集モーダル関連
     const editMessageModal = document.getElementById('edit-message-modal');
     const closeEditMessageModal = document.getElementById('close-edit-message-modal');
@@ -1126,9 +1179,6 @@
     const pdfFrame = document.getElementById('pdf-frame');
     const downloadPdfButton = document.getElementById('download-pdf-button');
 
-    // 絵文字ボタン関連 (削除)
-    // const emojiButtons = document.querySelectorAll('.emoji-button');
-
     // TTS関連のDOM要素
     const ttsOnOff = document.getElementById('tts-on-off');
     const ttsVoiceSelect = document.getElementById('tts-voice-select');
@@ -1139,9 +1189,11 @@
     const ttsVolumeInput = document.getElementById('tts-volume-input');
     const ttsVolumeValue = document.getElementById('tts-volume-value');
 
-    // const localStorageUsageDisplay = document.getElementById('local-storage-usage-display'); // 削除
-    // const MAX_LOCAL_STORAGE_BYTES = 5 * 1024 * 1024; // ローカルストレージの一般的な上限5MBをバイトで定義 // 削除
-
+    // ★画面構成改善ここから★ タブ関連のDOM要素
+    const tabNavigation = document.querySelector('.tab-navigation');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    // ★画面構成改善ここまで★
 
     // グローバル変数
     let currentApiKey = ''; // APIキーはセッション中のみ保持
@@ -1257,9 +1309,22 @@
         // 初期チャット表示 (APIキーがなければ設定を促す)
         startNewChat(true); 
 
-        // 絵文字ボタン初期化を削除
-
-        // ストレージ使用量の表示は削除
+        // ★画面構成改善ここから★ タブの初期状態を設定
+        tabPanes.forEach((pane, index) => {
+            if (index === 0) {
+                pane.classList.add('active');
+            } else {
+                pane.classList.remove('active');
+            }
+        });
+        tabButtons.forEach((button, index) => {
+            if (index === 0) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+        // ★画面構成改善ここまで★
     });
 
     // --- イベントリスナー設定 ---
@@ -1415,6 +1480,9 @@
     exportAllHistoryButton.addEventListener('click', exportAllChatSummaries);
     importAllHistoryInput.addEventListener('change', importAllChatSummaries);
 
+    // MDファイルインポートのイベントリスナーを追加
+    importMdInput.addEventListener('change', importMarkdownFile);
+
     deleteSelectedButton.addEventListener('click', deleteSelectedMessages);
     editSelectedButton.addEventListener('click', openEditMessageModal);
     playSelectedButton.addEventListener('click', playSelectedMessages);
@@ -1481,10 +1549,10 @@
             return;
         }
         if (confirm(`${checkedCheckboxes.length}件の履歴を削除しますか？\nこの変更はJSONファイルにエクスポートするまで永続化されません。`)) {
-            // ★変更：data-filename から data-chatid を取得
+            // data-filename から data-chatid を取得
             const chatIdsToDelete = Array.from(checkedCheckboxes).map(checkbox => checkbox.dataset.chatid);
             
-            // ★変更：グローバル変数から chatId を使って削除
+            // グローバル変数から chatId を使って削除
             allChatSummaries = allChatSummaries.filter(summary => !chatIdsToDelete.includes(summary.chatId)); 
             
             displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
@@ -1500,9 +1568,9 @@
         
         let selectedSummaries = [];
         checkedCheckboxes.forEach(checkbox => {
-            // ★変更：data-filename から data-chatid を取得
+            // data-filename から data-chatid を取得
             const chatIdToLoad = checkbox.dataset.chatid;
-            // ★変更：グローバル変数から chatId を使って検索
+            // グローバル変数から chatId を使って検索
             const summary = allChatSummaries.find(s => s.chatId === chatIdToLoad); 
             if (summary) {
                 selectedSummaries.push(summary);
@@ -1523,8 +1591,6 @@
         pdfViewerModal.style.display = 'none';
         pdfFrame.src = '';
     });
-
-    // 絵文字ボタンのイベントリスナーを削除
 
     // TTS関連のイベントリスナーは上で統合済み
 
@@ -1566,7 +1632,6 @@
         }
         textInput.focus();
         updateDeleteButtonVisibility();
-        // updateLocalStorageUsageDisplay(); // 削除
     }
 
     // チャット履歴のロードは、履歴リストからの選択に一本化
@@ -1657,7 +1722,12 @@
         }
         if (image) {
             const imgElement = document.createElement('img');
-            imgElement.src = `data:${image.mimeType};base64,${image.base64}`;
+            // 画像データがnullの場合、表示しない（MDインポート時など）
+            if (image.base64 && image.mimeType) {
+                imgElement.src = `data:${image.mimeType};base64,${image.base64}`;
+            } else {
+                imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjBGMDg4Ii8+PHRleHQgeD0iMyIgeT0iMzgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiPuaOpeS4gTwvdGV4dD48L3RleHQ+PC9zdmc+'; // Placeholder SVG for missing image
+            }
             imgElement.classList.add('message-image');
             messageElement.appendChild(imgElement);
         }
@@ -1716,7 +1786,7 @@
             const aiName = aiNameInput.value || 'AI'; // UI要素から直接取得
 
             const conversationText = currentConversationHistory // グローバル変数を使用
-                .filter(item => !item.image)
+                .filter(item => !item.image) // 画像はテキスト化しない
                 .map(item => `${item.role === 'user' ? userName : aiName}: ${item.content || ''}`)
                 .join('\n');
             
@@ -1766,7 +1836,7 @@
                 }
             }
 
-            // ★変更：currentChatUniqueId がない場合のフォールバック（通常は startNewChat で設定済み）
+            // currentChatUniqueId がない場合のフォールバック（通常は startNewChat で設定済み）
             if (!currentChatUniqueId) {
                 currentChatUniqueId = crypto.randomUUID();
             }
@@ -1777,7 +1847,7 @@
 
             // 内部管理用の chatSummaryData オブジェクト
             const chatSummaryData = { 
-                chatId: currentChatUniqueId, // ★追加：ユニークID
+                chatId: currentChatUniqueId, // ユニークID
                 title, 
                 summary, 
                 history: [...currentConversationHistory], // 現在の履歴をコピー
@@ -1791,7 +1861,7 @@
             if (statusMessage && statusMessage.parentNode) chatBox.removeChild(statusMessage);
             
             // グローバル変数allChatSummariesに追加または更新
-            saveChatSummaryToMemory(chatSummaryData); // ★変更：chatId を使って更新される
+            saveChatSummaryToMemory(chatSummaryData); // chatId を使って更新される
             alert(`チャットを保存しました: ${chatSummaryData.title}\n（履歴リストへの追加、及びJSONファイルへのエクスポートが行われました）`);
             displayChatSummaryInChatBox(chatSummaryData);
             currentActiveSummaryData = chatSummaryData; // 現在アクティブな概要データを更新
@@ -1808,7 +1878,7 @@
 
     // チャット概要をグローバル変数（インメモリ）に保存する（または更新する）
     function saveChatSummaryToMemory(chatSummaryData) {
-        // ★変更：chatId を使って既存の履歴を検索
+        // chatId を使って既存の履歴を検索
         const existingIndex = allChatSummaries.findIndex(item => item.chatId === chatSummaryData.chatId);
         if (existingIndex > -1) {
             allChatSummaries[existingIndex] = chatSummaryData; // 既存の履歴を更新
@@ -1823,7 +1893,7 @@
         const filenameElement = document.createElement('div');
         filenameElement.classList.add('message', 'summary-message');
         const displayDate = summaryData.date ? formatTimestamp(new Date(summaryData.date)) : '不明な日時';
-        // ★変更：ファイル名は summaryData.filename (ダウンロード用表示名) を使用
+        // ファイル名は summaryData.filename (ダウンロード用表示名) を使用
         filenameElement.innerHTML = `<h3>ファイル名: ${summaryData.filename || '不明'}</h3><p>保存日時: ${displayDate}</p>`;
         chatBox.appendChild(filenameElement);
 
@@ -1850,7 +1920,7 @@
 
         const filteredSummaries = summariesToDisplay.filter(summary => {
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
-            // ★変更：summary.filename の代わりに summary.title と summary.chatId を検索対象にする（必要であればfilenameも）
+            // summary.filename の代わりに summary.title と summary.chatId を検索対象にする（必要であればfilenameも）
             const title = (summary.title || '').toLowerCase();
             const date = (summary.date ? formatTimestamp(new Date(summary.date)) : '').toLowerCase();
             const chatId = (summary.chatId || '').toLowerCase(); // 新しく追加
@@ -1894,7 +1964,7 @@
             const listItem = document.createElement('li');
             const displayDate = summary.date ? formatTimestamp(new Date(summary.date)) : '不明な日時';
             
-            // ★変更：data-filename ではなく data-chatid を使用。chatIdがなければ生成
+            // data-filename ではなく data-chatid を使用。chatIdがなければ生成
             if (!summary.chatId) { // 既存の古いデータに chatId がない場合のフォールバック
                 summary.chatId = crypto.randomUUID();
                 // この変更を allChatSummaries に反映するために、必要であれば saveAllChatSummariesToStorage() を呼ぶ
@@ -1912,9 +1982,9 @@
     }
     
     // グローバル変数からチャット概要を削除する
-    // ★変更：deleteChatSummaryByFilename を deleteChatSummaryByChatId に改名
+    // deleteChatSummaryByFilename を deleteChatSummaryByChatId に改名
     function deleteChatSummaryByChatId(chatIdToDelete) {
-        allChatSummaries = allChatSummaries.filter(summary => summary.chatId !== chatIdToDelete); // ★変更：chatId でフィルター
+        allChatSummaries = allChatSummaries.filter(summary => summary.chatId !== chatIdToDelete); // chatId でフィルター
         displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
     }
 
@@ -1954,7 +2024,7 @@
             const speaker = item.role === 'user' ? userName : aiName;
             const timestamp = formatTimestamp(new Date(item.timestamp));
             markdownContent += `**${speaker}** (${timestamp}):\n`;
-            if (item.image) markdownContent += `> (画像添付)\n`;
+            if (item.image) markdownContent += `> (画像添付)\n`; // 画像がある場合はプレースホルダを追加
             if (item.content) item.content.split('\n').forEach(line => { markdownContent += `> ${line}\n`; });
             markdownContent += `\n`;
         });
@@ -1996,6 +2066,8 @@
                                 <span class="speaker" style="font-weight: bold; margin-bottom: 0px; display: block;">${speaker}</span>`;
             if (item.image && item.image.base64) {
                 contentForPdf += `<img src="data:${item.image.mimeType};base64,${item.image.base64}" class="message-image" alt="添付画像" style="max-width: 80%; height: auto; border-radius: 5px; margin-top: 5px; display: block; margin-left: auto; margin-right: auto;"><br>`;
+            } else if (item.image) { // MDインポートなどで画像データがないが、画像添付の記録がある場合
+                contentForPdf += `<div style="text-align: center; color: #888; font-style: italic; margin-top: 5px; margin-bottom: 5px;">(画像添付)</div>`;
             }
             if (item.content) {
                 contentForPdf += `<div class="message-content" style="margin-top: 2px;">${item.content.replace(/\n/g,'<br>')}</div>`;
@@ -2259,11 +2331,11 @@
                     const mergedSummaries = [...existingSummaries];
 
                     importedSummaries.forEach(importedSummary => {
-                        // ★変更：chatId がないデータには新しく生成
+                        // chatId がないデータには新しく生成
                         if (!importedSummary.chatId) {
                             importedSummary.chatId = crypto.randomUUID();
                         }
-                        // ★変更：chatId を使って既存の履歴を検索
+                        // chatId を使って既存の履歴を検索
                         const existingIndex = mergedSummaries.findIndex(
                             s => s.chatId === importedSummary.chatId
                         );
@@ -2277,7 +2349,7 @@
                     alert('チャット履歴をマージしました。');
 
                 } else {
-                    // ★変更：インポートされた履歴に chatId がない場合に対応
+                    // インポートされた履歴に chatId がない場合に対応
                     importedSummaries.forEach(importedSummary => {
                         if (!importedSummary.chatId) {
                             importedSummary.chatId = crypto.randomUUID();
@@ -2303,6 +2375,202 @@
         };
         reader.readAsText(file[0]);
     }
+
+    // MDファイルインポート関連の関数を追加
+    // Helper to escape regex special characters for dynamic user/AI names
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+    }
+
+    function importMarkdownFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const markdownContent = e.target.result;
+            try {
+                const parsedSummary = parseMarkdownChatHistory(markdownContent);
+                if (parsedSummary) {
+                    saveChatSummaryToMemory(parsedSummary); // Add/update in allChatSummaries
+                    displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+                    alert(`Markdownファイル「${file.name}」を読み込み、履歴リストに追加しました。`);
+                } else {
+                    alert('Markdownファイルの解析に失敗しました。');
+                }
+            } catch (error) {
+                console.error('Markdownファイルのインポートエラー:', error);
+                alert(`Markdownファイルのインポート中にエラーが発生しました: ${error.message}`);
+            } finally {
+                event.target.value = ''; // Clear file input
+            }
+        };
+        reader.onerror = () => {
+            alert('ファイルの読み込み中にエラーが発生しました。');
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    // Function to parse a Markdown chat history file
+    function parseMarkdownChatHistory(markdownContent) {
+        let title = '無題のチャット';
+        let summary = '';
+        let dateIsoString = new Date().toISOString();
+        let history = [];
+        let currentRole = '';
+        let currentContentLines = [];
+        let currentMessageTimestampIso = '';
+        let currentMessageHasImage = false; // Flag for current message
+
+        const userName = userNameInput.value || 'ユーザー';
+        const aiName = aiNameInput.value || 'AI';
+
+        const lines = markdownContent.split('\n');
+        let section = 'none'; // 'title', 'header_info', 'summary', 'history'
+        let readingSummary = false;
+        let readingHistory = false;
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            if (trimmedLine.startsWith('# ')) {
+                if (trimmedLine.startsWith('# チャット履歴')) {
+                    // Before switching to history, save any pending message
+                    if (currentRole && (currentContentLines.length > 0 || currentMessageHasImage)) {
+                        history.push({
+                            role: currentRole,
+                            content: currentContentLines.join('\n').trim(), // Trim content for leading/trailing newlines
+                            timestamp: currentMessageTimestampIso,
+                            image: currentMessageHasImage ? { base64: null, mimeType: null } : null
+                        });
+                    }
+                    readingSummary = false;
+                    readingHistory = true;
+                    currentRole = '';
+                    currentContentLines = [];
+                    currentMessageTimestampIso = '';
+                    currentMessageHasImage = false; // Reset flag
+                    continue; // Process next line
+                } else if (section === 'none') { // Assume first # H1 is the main title
+                    title = trimmedLine.substring(2).trim();
+                    section = 'title';
+                    continue; // Process next line
+                }
+            }
+
+            if (trimmedLine.startsWith('**保存日時:** ')) {
+                const dateStr = trimmedLine.substring('**保存日時:** '.length).trim();
+                // Expected format from formatTimestamp: YYYY/MM/DD HH:mm
+                const parts = dateStr.match(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/);
+                if (parts) {
+                    const year = parseInt(parts[1], 10);
+                    const month = parseInt(parts[2], 10) - 1; // Month is 0-indexed
+                    const day = parseInt(parts[3], 10);
+                    const hour = parseInt(parts[4], 10);
+                    const minute = parseInt(parts[5], 10);
+                    dateIsoString = new Date(year, month, day, hour, minute).toISOString();
+                } else {
+                    console.warn("Could not parse date string for summary:", dateStr);
+                }
+                section = 'header_info';
+                continue;
+            }
+
+            if (trimmedLine.startsWith('## 概要')) {
+                readingSummary = true;
+                readingHistory = false;
+                section = 'summary';
+                summary = ''; // Reset summary to collect lines
+                continue;
+            }
+
+            if (trimmedLine === '---') { // Separator
+                readingSummary = false; // Stop reading summary
+                continue;
+            }
+
+            if (readingSummary && trimmedLine.startsWith('> ')) {
+                summary += trimmedLine.substring(2) + '\n';
+                continue;
+            }
+
+            if (readingHistory) {
+                const userSpeakerMatch = trimmedLine.match(`^\\*\\*${escapeRegExp(userName)}\\*\\* \\((\\d{4}\\/\\d{2}\\/\\d{2} \\d{2}:\\d{2})\\):`);
+                const aiSpeakerMatch = trimmedLine.match(`^\\*\\*${escapeRegExp(aiName)}\\*\\* \\((\\d{4}\\/\\d{2}\\/\\d{2} \\d{2}:\\d{2})\\):`);
+                
+                if (userSpeakerMatch || aiSpeakerMatch) {
+                    // If there was a previous message, save it
+                    if (currentRole && (currentContentLines.length > 0 || currentMessageHasImage)) {
+                        history.push({
+                            role: currentRole,
+                            content: currentContentLines.join('\n').trim(),
+                            timestamp: currentMessageTimestampIso,
+                            image: currentMessageHasImage ? { base64: null, mimeType: null } : null
+                        });
+                    }
+                    // Start new message
+                    currentRole = userSpeakerMatch ? 'user' : 'assistant';
+                    const timestampStr = userSpeakerMatch ? userSpeakerMatch[1] : aiSpeakerMatch[1];
+                    const parts = timestampStr.match(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/);
+                    if (parts) {
+                         const year = parseInt(parts[1], 10);
+                         const month = parseInt(parts[2], 10) - 1;
+                         const day = parseInt(parts[3], 10);
+                         const hour = parseInt(parts[4], 10);
+                         const minute = parseInt(parts[5], 10);
+                         currentMessageTimestampIso = new Date(year, month, day, hour, minute).toISOString();
+                    } else {
+                        console.warn("Could not parse timestamp string in history:", timestampStr);
+                        currentMessageTimestampIso = new Date().toISOString(); // Fallback
+                    }
+                    currentContentLines = [];
+                    currentMessageHasImage = false; // Reset for new message
+                } else if (trimmedLine.startsWith('> ')) {
+                    const contentPart = trimmedLine.substring(2);
+                    if (contentPart === '(画像添付)') {
+                        currentMessageHasImage = true;
+                    } else {
+                        currentContentLines.push(contentPart);
+                    }
+                }
+                // Ignore empty lines within history if they don't start with '>'
+            }
+        }
+
+        // Save the last collected message if any
+        if (currentRole && (currentContentLines.length > 0 || currentMessageHasImage)) {
+            history.push({
+                role: currentRole,
+                content: currentContentLines.join('\n').trim(),
+                timestamp: currentMessageTimestampIso,
+                image: currentMessageHasImage ? { base64: null, mimeType: null } : null
+            });
+        }
+
+        // Trim final summary
+        summary = summary.trim();
+        if (summary === '') summary = '概要なし';
+
+        // Generate a new unique ID for the imported chat
+        const chatId = crypto.randomUUID();
+        const safeTitleForDownload = title.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
+        // Date format for filename: YYYYMMDD
+        const filenameDatePart = new Date(dateIsoString).getFullYear().toString() +
+                                 (new Date(dateIsoString).getMonth() + 1).toString().padStart(2, '0') +
+                                 new Date(dateIsoString).getDate().toString().padStart(2, '0');
+        const downloadFilename = `${filenameDatePart}_${safeTitleForDownload}.md`;
+
+        return {
+            chatId: chatId,
+            title: title,
+            summary: summary,
+            history: history,
+            date: dateIsoString,
+            filename: downloadFilename
+        };
+    }
+
 
     // --- ユーティリティ関数 ---
     function playNotificationSound(soundType = 'sine') {
@@ -2422,6 +2690,7 @@
         <ul>
             <li><span class="button-desc">各種設定:</span> AIの性格、チャット概要生成プロンプト、あなたとAIの名前、サウンド、TTS設定などを設定できます。<b>「設定をCSVで保存」/「設定をCSVから読込」で設定のバックアップ・復元が可能です。</b>
                 <br><b>「全履歴をJSONで保存」/「全履歴をJSONから読込」で全チャット履歴のバックアップ・復元が可能です。</b>
+                <br><b>「MDファイルを読込」で、「チャット保存」で作成したマークダウンファイルを履歴リストに追加できます。</b>
             </li>
             <li><span class="button-desc">API設定:</b> Gemini APIキーを設定・テスト・クリアできます。キーはブラウザに保存されず、このセッション中のみ有効です。</li>
             <li><span class="button-desc">PDFプレビュー:</b> 現在のチャット内容をPDF形式でプレビュー表示・ダウンロードできます。</li>
@@ -2690,6 +2959,28 @@
         ttsPitchValue.textContent = ttsPitch.toFixed(1);
         ttsVolumeValue.textContent = ttsVolume.toFixed(1);
     }
+
+    // ★画面構成改善ここから★ タブ切り替えロジック
+    function switchTab(event) {
+        const clickedTab = event.target;
+        // クリックされたのがタブボタンでなく、既にアクティブなタブなら何もしない
+        if (!clickedTab.classList.contains('tab-button') || clickedTab.classList.contains('active')) {
+            return;
+        }
+
+        // 現在のアクティブなタブボタンとペインを非アクティブにする
+        document.querySelector('.tab-button.active')?.classList.remove('active');
+        document.querySelector('.tab-pane.active')?.classList.remove('active');
+
+        // クリックされたタブをアクティブにし、対応するペインを表示する
+        clickedTab.classList.add('active');
+        const targetTabId = clickedTab.dataset.tab;
+        document.getElementById(targetTabId)?.classList.add('active');
+    }
+
+    // タブナビゲーションのクリックイベントリスナーを設定
+    tabNavigation.addEventListener('click', switchTab);
+    // ★画面構成改善ここまで★
 </script>
 
 </body>
