@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ＭｙAIチャット履歴</title>
+    <style>
+        html {
+            height: 100%;
+        }
+        body {
+            height: 100vh;
+            margin: 0;
+            font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+            background: linear-gradient(to bottom, #e0fff0, #ffffff);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        header {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            flex-wrap: nowrap;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #2e8b57;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+        }
+
+        /* Base Button Styles for a Modern Look */
+        .header-buttons button,
+        .modal-buttons button,
+        .csv-buttons-container button,
+        .csv-buttons-container label,
+        .chat-history-list-footer button,
+        .sort-controls button,
+        #save-edited-message-button,
+        #download-pdf-button {
+            padding: 10px 18px; /* Slightly more padding */
+            border: none;
+            color: white;
+            border-radius: 25px; /* More rounded */
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* Stronger, more modern shadow */
+            white-space: nowrap;
+            min-width: 100px; /* Give them a minimum width for consistency */
+            display: inline-flex; /* For better centering of text/icon if any */
+            justify-content: center;
+            align-items: center;
+            gap: 5px; /* Space between text and icon if any */
+        }
+        .header-buttons button:hover,
+        .modal-buttons button:hover,
+        .csv-buttons-container button:hover,
+        .csv-buttons-container label:hover,
+        .chat-history-list-footer button:hover,
+        .sort-controls button:hover,
+        #save-edited-message-button:hover,
+        #download-pdf-button:hover {
+            opacity: 0.95;
+            transform: translateY(-3px); /* Slightly more lift */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2); /* Deeper shadow on hover */
+        }
+
+        /* ヘッダーボタンのデフォルト色 */
+        #persona-button,
+        #load-chat-history-button,
+        #new-chat-button,
+        #settings-button,
+        #help-button {
+            background-color: #f0f0f0; /* Lighter background */
+            color: #444; /* Darker text */
+            border: 1px solid #ccc; /* Softer border */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* Lighter shadow */
+        }
+        #persona-button:hover,
+        #load-chat-history-button:hover,
+        #new-chat-button:hover,
+        #settings-button:hover,
+        #help-button:hover {
+            background-color: #e0e0e0; /* Darker on hover */
+            color: #222;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+
+        /* 各ヘッダーボタンの個別スタイル */
+        #delete-selected-button { background-color: #dc3545; } /* Bootstrap danger red */
+        #edit-selected-button { background-color: #ffc107; color: #333; } /* Bootstrap warning yellow */
+        #play-selected-button { background-color: #28a745; } /* Bootstrap success green */
+        #stop-speech-button { background-color: #6c757d; } /* Bootstrap secondary grey */
+        #save-chat-summary-button { background-color: #007bff; } /* Bootstrap primary blue */
+        #print-pdf-button { background-color: #17a2b8; } /* Bootstrap info teal */
+
+
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 20px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* サイドパネル（入力欄） */
+        #side-panel {
+            width: 280px;
+            min-width: 280px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        #side-panel h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #2e8b57;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            flex-grow: 1;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        #datetime-display {
+            text-align: center;
+            padding: 8px;
+            background-color: rgba(240, 240, 240, 0.7);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            font-size: 1.2em;
+            color: #555;
+            flex-shrink: 0;
+        }
+        .chat-box {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+            line-height: 1.5;
+            word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .message.selected { background-color: #ffebee; border: 1px solid #e57373; }
+        .message img.message-image { max-width: 100%; border-radius: 10px; margin-bottom: 8px; }
+        .user-message { background-color: #c8e6c9; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 5px; }
+        .bot-message { background-color: #ffffff; align-self: flex-start; border-bottom-left-radius: 5px; }
+        .error-message { background-color: #f8d7da; color: #721c24; align-self: flex-start; }
+        .summary-message { background-color: #fef9e7; align-self: center; width: 95%; max-width: 95%; border: 1px solid #fceecb; text-align: left; }
+        .timestamp { font-size: 0.75em; color: #888; margin-top: 4px; }
+        
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            flex-grow: 1;
+            min-height: 0;
+        }
+        #image-preview-container {
+            position: relative;
+            margin-bottom: 8px;
+            display: none;
+            width: fit-content;
+        }
+        #image-preview { max-width: 100px; max-height: 100px; border-radius: 8px; border: 1px solid #ddd; }
+        #remove-image-button {
+            position: absolute; top: -5px; right: -5px; width: 20px; height: 20px;
+            border-radius: 50%; border: none; background-color: rgba(0, 0, 0, 0.6);
+            color: white; cursor: pointer; font-size: 14px; line-height: 20px; text-align: center;
+        }
+        
+        .input-controls { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+        .input-buttons-container { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 8px; 
+            flex-wrap: wrap;
+            /* ★ここから変更★ */
+            align-items: flex-end; /* ボタンを下揃えに */
+            /* ★ここまで変更★ */
+        }
+        #text-input {
+            flex-grow: 1; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border: 1px solid #ddd;
+            border-radius: 12px; 
+            padding: 10px 15px; 
+            resize: vertical;
+            font-family: inherit; 
+            font-size: 1em;
+            /* ★ここから変更★ */
+            min-height: 120px; /* デフォルトで大きくする */
+            /* ★ここまで変更★ */
+        }
+        #text-input:focus {
+            outline: none; border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        /* 入力欄のアイコンボタンのスタイル (円形) */
+        #file-input-button, #mic-button, #send-button {
+            width: 48px; /* Slightly larger */
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 1.6em; /* Larger icon */
+            line-height: 48px; /* Center content vertically */
+            text-align: center;
+            display: flex; /* Use flex for perfect centering */
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15); /* Shadow for lift */
+        }
+        #file-input-button:hover, #mic-button:hover, #send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        #file-input-button { background-color: #4CAF50; } /* Consistent green */
+        #mic-button { background-color: #007bff; } /* Primary blue for mic */
+        #mic-button.recording { background-color: #dc3545; } /* Danger red when recording */
+        #send-button { background-color: #6f42c1; } /* Purple for send */
+
+        /* 絵文字ボタンコンテナ (削除したのでコメントアウトまたは削除) */
+        /*
+        .emoji-buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        .emoji-button {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            background-color: #f8f8f8;
+            color: #333;
+            cursor: pointer;
+            font-size: 1.4em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .emoji-button:hover {
+            background-color: #e8e8e8;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+        */
+
+
+        /* モーダル共通スタイル */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content {
+            background-color: #fefefe; margin: 2.5vh auto; padding: 20px; border: 1px solid #888;
+            width: 90%; max-width: 800px;
+            border-radius: 8px; display: flex; flex-direction: column;
+            max-height: 95vh;
+        }
+        #settings-modal .modal-content { max-width: 500px; }
+        .modal-body { overflow-y: auto; padding-right: 10px; }
+        .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content h2 { margin-top: 0; flex-shrink: 0; }
+        .modal-content h3 { font-size: 1.1em; margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .name-setting-container { display: flex; gap: 10px; align-items: center; }
+        .name-setting-container label { flex-basis: 100px; }
+        .name-setting-container input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        #persona-textarea, #summary-prompt-textarea, #api-key-input {
+            width: 100%; margin-top: 10px; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ccc; padding: 8px; font-family: inherit;
+        }
+        #persona-textarea { height: 200px; resize: vertical; }
+        #summary-prompt-textarea { height: 150px; resize: vertical; }
+        #api-key-input { height: auto; }
+
+        .examples-container { margin-top: 10px; }
+        .examples-container button { margin-right: 5px; margin-bottom: 5px; }
+        .modal-buttons { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 20px; flex-shrink: 0; }
+        .settings-columns { display: flex; gap: 25px; }
+        .settings-column { flex: 1; }
+
+        .sound-settings div {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sound-settings label {
+            min-width: 80px; /* Adjust as needed */
+            white-space: nowrap;
+        }
+        .sound-settings input[type="range"] {
+            flex-grow: 1;
+            width: auto;
+        }
+        .sound-settings span {
+            min-width: 30px;
+            text-align: right;
+        }
+
+        /* チャット履歴リスト表示用 */
+        #chat-history-list-modal .modal-content { max-width: 900px; }
+        #chat-history-search-input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        #chat-history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            overflow-y: auto;
+            max-height: 60vh;
+            margin-bottom: 10px;
+        }
+        #chat-history-list li {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        #chat-history-list li:last-child { border-bottom: none; }
+        #chat-history-list li:hover { background-color: #e8f5e9; }
+        #chat-history-list li .history-item-content {
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+        #chat-history-list li .title { font-weight: bold; color: #333; }
+        #chat-history-list li .date-time { font-size: 0.8em; color: #666; margin-top: 4px; }
+
+
+        .chat-history-list-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #eee;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .chat-history-list-footer .left-buttons,
+        .chat-history-list-footer .right-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+
+        /* 並べ替えコントロールのスタイル */
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        .sort-controls label {
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        .sort-controls select {
+            padding: 6px 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 0.9em;
+        }
+        /* Override specific modal buttons to fit new base style */
+        #save-settings-button, #test-key-button, #save-key-button {
+             background-color: #28a745; /* Green for saving/positive actions */
+             min-width: 100px;
+        }
+        #delete-key-button {
+            background-color: #dc3545; /* Red for deletion */
+            min-width: 100px;
+        }
+        .modal-buttons .right-buttons button {
+            background-color: #28a745; /* Consistent green for primary modal actions */
+        }
+        #test-key-button {
+            background-color: #17a2b8; /* Info teal for testing */
+        }
+
+        /* CSV buttons */
+        .csv-buttons-container button, .csv-buttons-container label {
+            background-color: #6f42c1; /* A distinct purple for CSV actions */
+            min-width: 150px;
+        }
+        #export-all-history-button {
+            background-color: #20c997; /* A vibrant green-teal for global export */
+        }
+        #import-csv-input, #import-all-history-input {
+            display: none;
+        }
+
+        /* Chat history list footer buttons */
+        .chat-history-list-footer .left-buttons,
+        .chat-history-list-footer .right-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+        .chat-history-list-footer button {
+            min-width: 120px; /* Slightly larger min-width */
+        }
+        #select-all-history-button { background-color: #007bff; }
+        #deselect-all-history-button { background-color: #6c757d; }
+        #load-selected-history-button { background-color: #28a745; }
+        #delete-selected-history-button { background-color: #dc3545; }
+        .sort-controls button {
+            background-color: #6c757d;
+            min-width: unset; /* Don't force min-width here */
+            padding: 8px 12px; /* Adjust padding for smaller button */
+            border-radius: 20px;
+        }
+        .sort-controls button:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #download-pdf-button {
+             background-color: #007bff;
+        }
+
+        .sort-order-icon {
+            font-size: 1.1em;
+            vertical-align: middle;
+        }
+
+        /* #side-panel #storage-info-panel {
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08); 
+            margin-top: auto; 
+            background-color: rgba(255, 255, 255, 0.5); 
+            border-radius: 8px; 
+            padding: 15px; 
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05); 
+            text-align: left; 
+        }
+        #side-panel #storage-info-panel h3 {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            text-align: left; 
+            color: #2e8b57;
+            border-bottom: none; 
+            padding-bottom: 0;
+        } */
+
+
+        /* 既存のブレークポイントは維持しつつ、モバイル向けに強化 */
+        @media (max-width: 1250px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                overflow-y: auto;
+            }
+            #side-panel {
+                order: -2;
+                width: 100%;
+                max-width: 600px;
+                margin-bottom: 10px;
+            }
+            .header-controls { justify-content: flex-end; }
+            header h1 { font-size: 1.2em; }
+        }
+
+        /* 携帯電話（縦表示）向けの調整 */
+        @media (max-width: 768px) {
+            body {
+                font-size: 0.9em;
+            }
+            header {
+                padding: 8px 10px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            header h1 {
+                font-size: 1.3em;
+                margin-bottom: 5px;
+            }
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+            }
+            .header-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+            .header-buttons button {
+                padding: 8px 15px; /* Adjust padding for smaller screens */
+                font-size: 0.9em;
+                min-width: unset; /* Allow buttons to shrink more */
+                border-radius: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .main-container {
+                gap: 15px;
+                padding: 10px;
+            }
+
+            #side-panel {
+                width: 100%;
+                max-width: 95%;
+                padding: 15px;
+            }
+            .chat-container {
+                width: 100%;
+                max-width: 95%;
+            }
+            .message {
+                max-width: 90%;
+                padding: 8px 12px;
+                font-size: 0.95em;
+            }
+            .timestamp {
+                font-size: 0.7em;
+            }
+
+            /* 入力エリアの調整 */
+            /* 絵文字ボタン削除に伴い、ここは不要 */
+            /*
+            .emoji-button {
+                width: 38px;
+                height: 38px;
+                font-size: 1.2em;
+            }
+            */
+            #file-input-button, #mic-button, #send-button {
+                width: 44px; /* Slightly smaller for mobile */
+                height: 44px;
+                font-size: 1.4em;
+                line-height: 44px;
+            }
+            /* ★ここから変更★ */
+            #text-input {
+                min-height: 100px; /* モバイルで入力欄を大きく */
+            }
+            /* ★ここまで変更★ */
+
+            /* モーダルの調整 */
+            .modal-content {
+                width: calc(100% - 20px);
+                margin: 10px auto;
+                padding: 15px;
+                max-height: 98vh;
+            }
+            #settings-modal .modal-content,
+            #persona-modal .modal-content,
+            #chat-history-list-modal .modal-content,
+            #pdf-viewer-modal .modal-content {
+                max-width: 95vw;
+            }
+            .modal-body {
+                padding-right: 0;
+            }
+            .settings-columns {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .name-setting-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .name-setting-container label {
+                flex-basis: 100%;
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            .csv-buttons-container {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            .csv-buttons-container button, .csv-buttons-container label {
+                width: 100%;
+                box-sizing: border-box;
+                min-width: unset;
+            }
+            .sound-settings div {
+                flex-wrap: wrap;
+            }
+            .sound-settings label {
+                flex-basis: 100%;
+            }
+
+            #chat-history-search-input {
+                width: calc(100% - 20px);
+                margin: 10px 0;
+            }
+            #chat-history-list {
+                max-height: 50vh;
+            }
+            .chat-history-list-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .chat-history-list-footer .left-buttons,
+            .chat-history-list-footer .right-buttons,
+            .sort-controls {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            .chat-history-list-footer button,
+            .sort-controls select, .sort-controls button {
+                flex-grow: 1;
+                flex-basis: calc(50% - 5px);
+                box-sizing: border-box;
+                min-width: unset;
+                text-align: center;
+            }
+            .sort-controls label {
+                flex-basis: 100%;
+                text-align: left;
+            }
+            .sort-controls select, .sort-controls button {
+                flex-basis: calc(50% - 5px);
+            }
+        }
+
+        /* 非常に小さい携帯電話（例: iPhone SEなど）向けの追加調整 */
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.1em;
+            }
+            .header-buttons button {
+                font-size: 0.85em;
+                padding: 6px 12px;
+            }
+            .main-container {
+                padding: 5px;
+            }
+            #side-panel, .chat-container {
+                padding: 10px;
+            }
+            .message {
+                max-width: 95%;
+            }
+            /* 絵文字ボタン削除に伴い、ここは不要 */
+            /*
+            .emoji-button {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1em;
+            }
+            */
+            #file-input-button, #mic-button, #send-button {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+                line-height: 40px;
+            }
+            .modal-content {
+                width: calc(100% - 10px);
+                margin: 5px auto;
+                padding: 10px;
+            }
+            /* フッターのボタンは全て縦に積む */
+            .chat-history-list-footer .left-buttons button,
+            .chat-history-list-footer .right-buttons button,
+            .sort-controls select, .sort-controls button {
+                flex-basis: 100%;
+            }
+        }
+
+
+        /* 印刷時のスタイル */
+        @media print {
+            body { margin: 0; padding: 0; }
+            header, #side-panel, .input-area, .modal, .chat-history-list-footer { display: none !important; }
+            .main-container {
+                display: block;
+                padding: 0;
+                margin: 0;
+            }
+            .chat-container { 
+                border: none; 
+                box-shadow: none; 
+                max-width: none; 
+                width: 100%; 
+                background-color: #fff;
+                backdrop-filter: none;
+                overflow: visible;
+            }
+            #datetime-display { display: none; }
+            .chat-box { 
+                overflow: visible;
+                padding: 10px;
+            }
+            /* メッセージの途中で改ページしない設定 */
+            .message, .chat-log .message { 
+                box-shadow: none; 
+                border: 1px solid #eee;
+                margin-bottom: 5px;
+                padding: 8px 12px; 
+                border-radius: 8px; 
+                max-width: 100%; 
+                word-wrap: break-word; 
+                page-break-inside: avoid;
+            }
+            .user-message { background-color: #e0f0e0; text-align: left; margin-left: 0; border-bottom-right-radius: 8px; border-bottom-left-radius: 5px;} /* 修正箇所 */
+            .bot-message { background-color: #f0f0f0; text-align: left; border-bottom-left-radius: 5px;}
+            .chat-log .speaker { font-weight: bold; margin-bottom: 0px; display: block; }
+            .chat-log .timestamp { font-size: 0.75em; color: #666; margin-top: 2px; display: block; text-align: right;}
+            .message-content { margin-top: 2px; }
+            
+            .summary-message { background-color: #fff8e6; border: 1px solid #ffeeba; text-align: left; margin: 10px 0; }
+            .summary-message h3 { font-size: 1.1em; margin-top: 0; margin-bottom: 5px; border-bottom: none; }
+            .summary-message h2 { font-size: 1.4em; margin-top: 10px; margin-bottom: 5px; border-bottom: none; }
+            .summary-message p { margin-top: 5px; margin-bottom: 0; }
+            
+            h1, h2, h3 { color: #2e8b57; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 15px; margin-bottom: 10px; }
+            hr { border: 0; border-top: 1px dashed #ccc; margin: 15px 0; }
+            .message-image { max-width: 80%; height: auto; border-radius: 5px; margin-top: 5px; display: block; margin-left: auto; margin-right: auto; }
+            .chat-log { padding: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>MyAI Chat History Ver2.00(ファイル保存版)</h1> <!-- タイトルに追記 -->
+    <div class="header-controls">
+        <div class="header-buttons">
+            <button id="persona-button">各種設定</button>
+            <button id="delete-selected-button" style="display: none;">選択を削除</button>
+            <button id="edit-selected-button" style="display: none;">選択を編集</button>
+            <button id="play-selected-button" style="display: none;">選択を再生</button>
+            <button id="stop-speech-button" style="display: none;">音声停止</button>
+            <button id="save-chat-summary-button">チャット保存</button>
+            <button id="load-chat-history-button">履歴一覧</button>
+            <button id="print-pdf-button" style="display: none;">PDFプレビュー</button>
+            <button id="new-chat-button">新しいチャット</button>
+            <button id="settings-button">API設定</button>
+            <button id="help-button">取扱説明書</button>
+        </div>
+    </div>
+</header>
+
+<input type="file" id="image-file-input" style="display: none;" accept="image/*">
+<input type="file" id="import-csv-input" style="display: none;" accept=".csv">
+<input type="file" id="import-all-history-input" style="display: none;" accept=".json">
+
+
+<div class="main-container">
+    <div class="chat-container">
+        <div id="datetime-display"></div>
+        <div class="chat-box" id="chat-box"></div>
+    </div>
+    
+    <div id="side-panel">
+        <div class="input-area">
+            <div id="image-preview-container">
+                <img id="image-preview" src="" alt="Image Preview">
+                <button id="remove-image-button">&times;</button>
+            </div>
+            <div class="input-controls">
+                <div class="input-buttons-container">
+                    <button id="file-input-button" title="画像を選択">📎</button>
+                    <button id="mic-button" title="音声入力">🎤</button>
+                    <button id="send-button" title="メッセージを送信">✈️</button>
+                </div>
+                <textarea id="text-input" placeholder="メッセージを入力または画像をペースト... (Shift+Enterで改行)"></textarea>
+            </div>
+        </div>
+        <!-- ストレージ情報パネルを削除 -->
+        <!-- <div id="storage-info-panel">
+            <h3 style="margin-top: 0; margin-bottom: 5px;">ストレージ情報</h3>
+            <p id="local-storage-usage-display">ローカルストレージ使用量: 計算中...</p>
+            <p style="font-size: 0.8em; color: #777; margin-top: 5px;">※ ブラウザのローカルストレージは約5MBが一般的です。</p>
+        </div> -->
+        <p style="font-size: 0.8em; color: #777; margin-top: 10px; text-align: center;">※ チャット履歴と設定はPCファイルで保存・読込されます。</p>
+        <p style="font-size: 0.8em; color: #777; margin-top: 5px; text-align: center;">※ APIキーはセッションごとに入力が必要です。</p>
+    </div>
+</div>
+
+<!-- 各種設定モーダル -->
+<div id="persona-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-persona-modal">&times;</span>
+        <h2>各種設定</h2>
+        <h3 style="margin-top:0;">全チャット履歴のエクスポート/インポート</h3>
+        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+            「全履歴をJSONで保存」で全てのチャット履歴をファイルに保存し、「全履歴をJSONから読込」で保存したファイルを読み込みます。<br>
+            これにより、アプリ起動時に履歴が表示されるようになります。
+        </p>
+        <div class="csv-buttons-container">
+            <button id="export-all-history-button" style="background-color: #20c997;">全履歴をJSONで保存</button>
+            <label for="import-all-history-input" style="background-color: #6f42c1;">全履歴をJSONから読込</label>
+        </div>
+        <hr style="margin-top:20px; border-top:1px dashed #eee;">
+
+        <div class="modal-body">
+            <div class="settings-columns">
+                <div class="settings-column">
+                    <h3>AIの性格（システムプロンプト）</h3>
+                    <p>AIの振る舞いを指定する指示を入力してください。</p>
+                    <textarea id="persona-textarea" placeholder="例：あなたは親切でフレンドリーなアシスタントです。絵文字をたくさん使って、ユーザーを励ましてください。"></textarea>
+                    <div class="examples-container">
+                        <p>設定例:</p>
+                        <button class="persona-example-btn" data-persona="あなたはユーザーをサポートする、親切で優しいアシスタントです。常に丁寧な言葉遣いを心がけてください。">優しいアシスタント</button>
+                        <button class="persona-example-btn" data-persona="あなたは特定の分野の専門家です。質問に対して、専門用語を交えつつ、常に簡潔かつ正確に答えてください。">簡潔な専門家</button>
+                        <button class="persona-example-btn" data-persona="あんたは関西弁を話す、気さくな友達やで。タメ口で、たまに冗談を交えながら返事してな。">関西弁の友達</button>
+                    </div>
+                </div>
+                <div class="settings-column">
+                    <h3>チャット概要生成プロンプト</h3>
+                    <p>チャット保存時の概要生成AIへの指示です。<br><code>{CONVERSATION_HISTORY}</code>に会話履歴が挿入されます。</p>
+                    <textarea id="summary-prompt-textarea" placeholder="例：以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  &quot;title&quot;: &quot;ここにタイトルを記述 (15文字程度)&quot;,\n  &quot;summary&quot;: &quot;ここに会話の要約を記述 (第三者の視点から自然な文章で)&quot;\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---"></textarea>
+
+                    <h3>会話履歴の名前設定</h3>
+                    <div class="name-setting-container" style="margin-bottom: 10px;">
+                        <label for="user-name-input">あなたの名前:</label>
+                        <input type="text" id="user-name-input" placeholder="ユーザー">
+                    </div>
+                    <div class="name-setting-container">
+                        <label for="ai-name-input">AIの名前:</label>
+                        <input type="text" id="ai-name-input" placeholder="AI">
+                    </div>
+
+                    <h3>サウンド設定</h3>
+                    <div class="sound-settings">
+                        <div>
+                            <input type="checkbox" id="sound-on-off" checked>
+                            <label for="sound-on-off">AI応答時にサウンドを鳴らす</label>
+                        </div>
+                        <div>
+                            <label for="sound-type-select">サウンドの種類:</label>
+                            <select id="sound-type-select">
+                                <option value="sine">サイン波 (標準)</option>
+                                <option value="square">矩形波 (ピコピコ)</option>
+                                <option value="sawtooth">のこぎり波 (ブザー)</option>
+                                <option value="triangle">三角波 (マイルド)</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <input type="checkbox" id="tts-on-off" checked>
+                            <label for="tts-on-off">AI応答を音声で読み上げる</label>
+                        </div>
+                        <div>
+                            <label for="tts-voice-select">音声の種類:</label>
+                            <select id="tts-voice-select"></select>
+                        </div>
+                        <div>
+                            <label for="tts-rate-input">速度:</label>
+                            <input type="range" id="tts-rate-input" min="0.1" max="2" step="0.1" value="1">
+                            <span id="tts-rate-value">1.0</span>
+                        </div>
+                        <div>
+                            <label for="tts-pitch-input">ピッチ:</label>
+                            <input type="range" id="tts-pitch-input" min="0" max="2" step="0.1" value="1">
+                            <span id="tts-pitch-value">1.0</span>
+                        </div>
+                        <div>
+                            <label for="tts-volume-input">音量:</label>
+                            <input type="range" id="tts-volume-input" min="0" max="1" step="0.1" value="1">
+                            <span id="tts-volume-value">1.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size: 0.9em; color: #666; margin-top: 20px; margin-bottom: 10px;">
+                「設定をCSVで保存」で上記設定をファイルに保存し、「設定をCSVから読込」で保存したファイルを読み込みます。<br>
+                これにより、アプリ起動時に設定が反映されるようになります。
+            </p>
+            <div class="csv-buttons-container">
+                <button id="export-csv-button" style="background-color: #6f42c1;">設定をCSVで保存</button>
+                <label for="import-csv-input" id="import-csv-button" style="background-color: #6f42c1;">設定をCSVから読込</label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <div></div>
+            <div class="right-buttons">
+                 <button id="save-settings-button">閉じる</button> <!-- 「保存」ではなく「閉じる」に変更 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- APIキー設定モーダル -->
+<div id="settings-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-settings-modal">&times;</span>
+        <h2>Gemini APIキー設定</h2>
+        <div class="modal-body">
+            <p>ここに取得したGemini APIキーを入力して、セッション中に利用してください。</p>
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                <!-- 変更ここから -->
+                ※ APIキーはブラウザに保存できますが、セキュリティのために手動入力またはCSVでの設定インポートをお勧めします。保存した場合でも、ブラウザのキャッシュをクリアすると削除されます。
+                <!-- 変更ここまで -->
+            </p>
+            <input type="password" id="api-key-input" placeholder="APIキーを入力...">
+            <div id="test-key-result"></div>
+        </div>
+        <div class="modal-buttons">
+            <button id="delete-key-button">キーをクリア</button> <!-- 「削除」から「クリア」に変更 -->
+            <div class="right-buttons">
+                <button id="test-key-button">APIキーをテスト</button>
+                <button id="save-key-button">設定</button> <!-- 「保存」から「設定」に変更 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- メッセージ編集モーダル -->
+<div id="edit-message-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-edit-message-modal">&times;</span>
+        <h2>メッセージの編集</h2>
+        <div class="modal-body">
+            <textarea id="edit-message-textarea" style="width: 100%; height: 150px; margin-bottom: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"></textarea>
+            <button id="save-edited-message-button" style="background-color: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- チャット履歴リストモーダル -->
+<div id="chat-history-list-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-chat-history-list-modal">&times;</span>
+        <h2>チャット履歴一覧</h2>
+        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+            このリストはアプリ起動時に自動で読み込まれません。「各種設定」からJSONファイルを読み込んでください。<br>
+            ここでの変更（読み込み、削除）は、再度JSONファイルにエクスポートしないと保存されません。
+        </p>
+        <input type="text" id="chat-history-search-input" placeholder="タイトルや日付で検索...">
+        <ul id="chat-history-list">
+            <!-- チャット履歴がここに表示されます -->
+        </ul>
+        <div class="chat-history-list-footer">
+            <div class="left-buttons">
+                <button id="select-all-history-button">全選択</button>
+                <button id="deselect-all-history-button">全解除</button>
+                <button id="load-selected-history-button">選択を読込</button>
+            </div>
+            <div class="sort-controls">
+                <label for="sort-by-select">並べ替え:</label>
+                <select id="sort-by-select">
+                    <option value="date">日付</option>
+                    <option value="title">タイトル</option>
+                </select>
+                <button id="sort-order-button">
+                    <span id="sort-order-icon" class="sort-order-icon">↓</span>
+                </button>
+            </div>
+            <div class="right-buttons">
+                <button id="delete-selected-history-button">選択を削除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF Viewer Modal -->
+<div id="pdf-viewer-modal" class="modal">
+    <div class="modal-content" style="max-width: 90%; height: 90vh;">
+        <span class="close-button" id="close-pdf-viewer-modal">&times;</span>
+        <h2>PDFプレビュー</h2>
+        <div class="modal-body" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                <strong>💡ご注意:</strong> 正しいファイル名でダウンロードするには、下の「PDFをダウンロード」ボタンを使用してください。<br>
+                ブラウザのPDFビューアが提供するダウンロードボタンでは、ファイル名が意図しないものになる場合があります。
+            </p>
+            <iframe id="pdf-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+        <div class="modal-buttons">
+            <button id="download-pdf-button" style="background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 44px; cursor: pointer; font-weight: bold;">PDFをダウンロード</button>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+    // DOM要素の取得
+    const chatBox = document.getElementById('chat-box');
+    const textInput = document.getElementById('text-input');
+    const sendButton = document.getElementById('send-button');
+    const micButton = document.getElementById('mic-button');
+    const saveChatSummaryButton = document.getElementById('save-chat-summary-button');
+    const loadChatHistoryButton = document.getElementById('load-chat-history-button');
+    const printPdfButton = document.getElementById('print-pdf-button');
+    const newChatButton = document.getElementById('new-chat-button');
+    const helpButton = document.getElementById('help-button');
+    const datetimeDisplay = document.getElementById('datetime-display');
+    const imageFileInput = document.getElementById('image-file-input');
+    const fileInputButton = document.getElementById('file-input-button');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const removeImageButton = document.getElementById('remove-image-button');
+    const userNameInput = document.getElementById('user-name-input');
+    const aiNameInput = document.getElementById('ai-name-input'); 
+    const deleteSelectedButton = document.getElementById('delete-selected-button');
+    const editSelectedButton = document.getElementById('edit-selected-button');
+    const playSelectedButton = document.getElementById('play-selected-button');
+    const stopSpeechButton = document.getElementById('stop-speech-button');
+
+    // モーダル関連のDOM要素
+    const personaButton = document.getElementById('persona-button');
+    const personaModal = document.getElementById('persona-modal');
+    const closePersonaModal = document.getElementById('close-persona-modal');
+    const personaTextarea = document.getElementById('persona-textarea');
+    const saveSettingsButton = document.getElementById('save-settings-button');
+    const personaExampleBtns = document.querySelectorAll('.persona-example-btn');
+    const settingsButton = document.getElementById('settings-button');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsModal = document.getElementById('close-settings-modal');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const saveKeyButton = document.getElementById('save-key-button');
+    const soundOnOff = document.getElementById('sound-on-off');
+    const soundTypeSelect = document.getElementById('sound-type-select');
+    const testKeyButton = document.getElementById('test-key-button');
+    const deleteKeyButton = document.getElementById('delete-key-button');
+    const testKeyResult = document.getElementById('test-key-result');
+    const summaryPromptTextarea = document.getElementById('summary-prompt-textarea');
+
+    // CSVインポート関連
+    const importCsvInput = document.getElementById('import-csv-input');
+    const exportCsvButton = document.getElementById('export-csv-button');
+
+    // 全チャット履歴エクスポート/インポート関連
+    const exportAllHistoryButton = document.getElementById('export-all-history-button');
+    const importAllHistoryInput = document.getElementById('import-all-history-input');
+    
+    // メッセージ編集モーダル関連
+    const editMessageModal = document.getElementById('edit-message-modal');
+    const closeEditMessageModal = document.getElementById('close-edit-message-modal');
+    const editMessageTextarea = document.getElementById('edit-message-textarea');
+    const saveEditedMessageButton = document.getElementById('save-edited-message-button');
+    
+    // チャット履歴リストモーダル関連
+    const chatHistoryListModal = document.getElementById('chat-history-list-modal');
+    const closeChatHistoryListModal = document.getElementById('close-chat-history-list-modal');
+    const chatHistoryList = document.getElementById('chat-history-list');
+    const chatHistorySearchInput = document.getElementById('chat-history-search-input');
+    const selectAllHistoryButton = document.getElementById('select-all-history-button');
+    const deselectAllHistoryButton = document.getElementById('deselect-all-history-button');
+    const deleteSelectedHistoryButton = document.getElementById('delete-selected-history-button');
+    const loadSelectedHistoryButton = document.getElementById('load-selected-history-button');
+    
+    // 並べ替え関連のDOM要素
+    const sortBySelect = document.getElementById('sort-by-select');
+    const sortOrderButton = document.getElementById('sort-order-button');
+    const sortOrderIcon = document.getElementById('sort-order-icon');
+
+    // PDF Viewer Modal関連
+    const pdfViewerModal = document.getElementById('pdf-viewer-modal');
+    const closePdfViewerModal = document.getElementById('close-pdf-viewer-modal');
+    const pdfFrame = document.getElementById('pdf-frame');
+    const downloadPdfButton = document.getElementById('download-pdf-button');
+
+    // 絵文字ボタン関連 (削除)
+    // const emojiButtons = document.querySelectorAll('.emoji-button');
+
+    // TTS関連のDOM要素
+    const ttsOnOff = document.getElementById('tts-on-off');
+    const ttsVoiceSelect = document.getElementById('tts-voice-select');
+    const ttsRateInput = document.getElementById('tts-rate-input');
+    const ttsRateValue = document.getElementById('tts-rate-value');
+    const ttsPitchInput = document.getElementById('tts-pitch-input');
+    const ttsPitchValue = document.getElementById('tts-pitch-value');
+    const ttsVolumeInput = document.getElementById('tts-volume-input');
+    const ttsVolumeValue = document.getElementById('tts-volume-value');
+
+    // const localStorageUsageDisplay = document.getElementById('local-storage-usage-display'); // 削除
+    // const MAX_LOCAL_STORAGE_BYTES = 5 * 1024 * 1024; // ローカルストレージの一般的な上限5MBをバイトで定義 // 削除
+
+
+    // グローバル変数
+    let currentApiKey = ''; // APIキーはセッション中のみ保持
+    let currentConversationHistory = []; // 現在のチャット履歴（インメモリ）
+    let allChatSummaries = []; // 読み込まれた全チャット履歴の概要リスト（インメモリ）
+    let attachedImage = null;
+    let editingMessageElement = null;
+    let currentActiveSummaryData = null; // 現在表示中の概要データ
+    let currentSortBy = 'date'; // 履歴リストの並べ替え基準
+    let currentSortOrder = 'desc'; // 履歴リストの並べ替え順
+    let ttsEnabled = true;
+    let selectedTtsVoice = null;
+    let availableVoices = [];
+    let ttsRate = 1.0;
+    let ttsPitch = 1.0;
+    let ttsVolume = 1.0;
+
+    // localStorageのキー
+    const SETTINGS_KEY = 'myAISettings';
+
+    // --- localStorageへの設定保存関数 ---
+    function saveAllSettingsToLocalStorage() {
+        const settings = {
+            apiKey: currentApiKey,
+            persona: personaTextarea.value.trim(),
+            summaryPrompt: summaryPromptTextarea.value.trim(),
+            userName: userNameInput.value.trim(),
+            aiName: aiNameInput.value.trim(),
+            soundEnabled: soundOnOff.checked,
+            soundType: soundTypeSelect.value,
+            ttsEnabled: ttsOnOff.checked,
+            ttsVoiceName: ttsVoiceSelect.value,
+            ttsRate: parseFloat(ttsRateInput.value),
+            ttsPitch: parseFloat(ttsPitchInput.value),
+            ttsVolume: parseFloat(ttsVolumeInput.value),
+            chatHistorySortBy: currentSortBy,
+            chatHistorySortOrder: currentSortOrder
+        };
+        try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            console.log('設定をlocalStorageに保存しました。');
+        } catch (e) {
+            console.error('設定の保存中にエラーが発生しました:', e);
+            // alert('設定の保存中にエラーが発生しました。ブラウザのストレージ容量を確認してください。'); // alertは頻繁に出さない
+        }
+    }
+
+    // --- localStorageからの設定読み込み関数 ---
+    function loadAllSettingsFromLocalStorage() {
+        try {
+            const storedSettings = localStorage.getItem(SETTINGS_KEY);
+            if (storedSettings) {
+                const settings = JSON.parse(storedSettings);
+
+                currentApiKey = settings.apiKey || '';
+                apiKeyInput.value = currentApiKey;
+
+                personaTextarea.value = settings.persona || '';
+                summaryPromptTextarea.value = settings.summaryPrompt || '';
+
+                userNameInput.value = settings.userName || 'ユーザー';
+                aiNameInput.value = settings.aiName || 'AI';
+
+                soundOnOff.checked = typeof settings.soundEnabled === 'boolean' ? settings.soundEnabled : true;
+                soundTypeSelect.value = settings.soundType || 'sine';
+
+                ttsOnOff.checked = typeof settings.ttsEnabled === 'boolean' ? settings.ttsEnabled : true;
+                ttsEnabled = ttsOnOff.checked;
+
+                // ttsVoiceSelect.value は loadVoices() で設定されるため、ここでは文字列を保持するだけ
+                ttsVoiceSelect.value = settings.ttsVoiceName || '';
+                
+                ttsRate = settings.ttsRate !== undefined ? parseFloat(settings.ttsRate) : 1.0;
+                ttsPitch = settings.ttsPitch !== undefined ? parseFloat(settings.ttsPitch) : 1.0;
+                ttsVolume = settings.ttsVolume !== undefined ? parseFloat(settings.ttsVolume) : 1.0;
+                
+                ttsRateInput.value = ttsRate;
+                ttsRateValue.textContent = ttsRate.toFixed(1);
+                ttsPitchInput.value = ttsPitch;
+                ttsPitchValue.textContent = ttsPitch.toFixed(1);
+                ttsVolumeInput.value = ttsVolume;
+                ttsVolumeValue.textContent = ttsVolume.toFixed(1);
+
+                currentSortBy = settings.chatHistorySortBy || 'date';
+                currentSortOrder = settings.chatHistorySortOrder || 'desc';
+                
+                // UI要素に反映
+                sortBySelect.value = currentSortBy;
+                sortOrderIcon.textContent = (currentSortOrder === 'asc' ? '↑' : '↓');
+
+                console.log('設定をlocalStorageから読み込みました。');
+                return true; // 設定が読み込まれた
+            }
+        } catch (e) {
+            console.error('設定の読み込み中にエラーが発生しました:', e);
+            // Fallback to default if loading fails
+        }
+        return false; // 設定が読み込まれなかったか、エラーが発生した
+    }
+
+    // --- 初期化処理 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const settingsLoaded = loadAllSettingsFromLocalStorage(); // localStorageから設定を読み込む
+
+        if (!settingsLoaded) { // 読み込まれなかった場合のみデフォルト値を適用
+            loadSettingsFromMemoryOrDefault(); // 既存のデフォルト値適用ロジック
+        }
+
+        loadVoices(); // 音声リストをロード
+        updateSpeechControlButtonVisibility();
+
+        // 初期チャット表示 (APIキーがなければ設定を促す)
+        startNewChat(true); 
+
+        // 絵文字ボタン初期化を削除
+
+        // ストレージ使用量の表示は削除
+    });
+
+    // --- イベントリスナー設定 ---
+
+    newChatButton.addEventListener('click', () => startNewChat(false));
+    saveChatSummaryButton.addEventListener('click', () => { if (checkApiKey()) createChatSummary(); });
+    loadChatHistoryButton.addEventListener('click', () => { 
+        displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+        chatHistoryListModal.style.display = 'block'; 
+    });
+    
+    printPdfButton.addEventListener('click', () => {
+        if (!currentActiveSummaryData) {
+            alert("プレビューするチャット履歴がありません。チャットを保存するか、履歴を読み込んでください。");
+            return;
+        }
+        showPdfPreviewOfChatSummary();
+    });
+    
+    helpButton.addEventListener('click', showHelp);
+    
+    function sendMessage() {
+        if (textInput.value.trim() !== '' || attachedImage) {
+            if (!checkApiKey()) return;
+            handleUserInput(textInput.value);
+            textInput.value = '';
+        }
+    }
+    
+    sendButton.addEventListener('click', sendMessage);
+    textInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+
+    textInput.addEventListener('paste', handlePaste);
+    fileInputButton.addEventListener('click', () => imageFileInput.click());
+    imageFileInput.addEventListener('change', handleFileSelect);
+    removeImageButton.addEventListener('click', removeAttachedImage);
+    
+    settingsButton.addEventListener('click', () => {
+        testKeyResult.textContent = '';
+        testKeyResult.className = '';
+        settingsModal.style.display = 'block';
+    });
+    closeSettingsModal.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+        saveAllSettingsToLocalStorage(); // モーダルを閉じるときに設定を保存
+    });
+    saveKeyButton.addEventListener('click', () => {
+        const newKey = apiKeyInput.value.trim();
+        if (newKey) {
+            currentApiKey = newKey; // APIキーをグローバル変数に設定
+            saveAllSettingsToLocalStorage(); // 設定をlocalStorageに保存
+            settingsModal.style.display = 'none';
+            alert('APIキーを設定し、ブラウザに保存しました。');
+        } else {
+            alert('APIキーを入力してください。');
+        }
+    });
+    testKeyButton.addEventListener('click', testApiKey);
+    deleteKeyButton.addEventListener('click', () => {
+        if (confirm('現在のAPIキー設定をクリアし、ブラウザから削除しますか？')) {
+            currentApiKey = ''; 
+            apiKeyInput.value = ''; 
+            saveAllSettingsToLocalStorage(); // APIキーをクリアしてlocalStorageに保存
+            alert('APIキー設定をクリアし、ブラウザから削除しました。');
+            testKeyResult.textContent = ''; 
+            testKeyResult.className = '';
+        }
+    });
+
+    personaButton.addEventListener('click', () => {
+        personaModal.style.display = 'block';
+        loadVoices(); // 音声リストを再ロードしてUIに表示
+    });
+
+    closePersonaModal.addEventListener('click', () => { 
+        personaModal.style.display = 'none'; 
+        saveAllSettingsToLocalStorage(); // モーダルを閉じるときに設定を保存
+    });
+    // 「保存」ボタンを「閉じる」に変更。設定はUIに直接反映される
+    saveSettingsButton.addEventListener('click', () => {
+        // UI要素の値を直接グローバル変数/UIに反映させる (これは既にDOMにバインドされているので実質不要だが、明示的に)
+        // ここでの設定値の読み込みは、主に saveAllSettingsToLocalStorage で行われる
+        ttsEnabled = ttsOnOff.checked; // グローバル変数を更新
+        selectedTtsVoice = availableVoices.find(voice => voice.name === ttsVoiceSelect.value) || null; // 選択された音声を更新
+        ttsRate = parseFloat(ttsRateInput.value);
+        ttsPitch = parseFloat(ttsPitchInput.value);
+        ttsVolume = parseFloat(ttsVolumeInput.value);
+
+        saveAllSettingsToLocalStorage(); // モーダルを閉じるときに設定を保存
+        personaModal.style.display = 'none';
+        alert('設定を閉じました。変更はブラウザに保存されました。');
+    });
+    personaExampleBtns.forEach(btn => {
+        btn.addEventListener('click', () => { 
+            personaTextarea.value = btn.dataset.persona; 
+            saveAllSettingsToLocalStorage(); // 例文適用時に設定を保存
+        });
+    });
+
+    // 各設定要素の変更時にlocalStorageに保存
+    personaTextarea.addEventListener('change', saveAllSettingsToLocalStorage);
+    summaryPromptTextarea.addEventListener('change', saveAllSettingsToLocalStorage);
+    userNameInput.addEventListener('change', saveAllSettingsToLocalStorage);
+    aiNameInput.addEventListener('change', saveAllSettingsToLocalStorage);
+    soundOnOff.addEventListener('change', saveAllSettingsToLocalStorage);
+    soundTypeSelect.addEventListener('change', saveAllSettingsToLocalStorage);
+    ttsOnOff.addEventListener('change', () => {
+        ttsEnabled = ttsOnOff.checked;
+        saveAllSettingsToLocalStorage();
+        if (!ttsEnabled) {
+            window.speechSynthesis.cancel();
+        }
+        updateSpeechControlButtonVisibility();
+    });
+    ttsVoiceSelect.addEventListener('change', () => {
+        const selectedName = ttsVoiceSelect.value;
+        selectedTtsVoice = availableVoices.find(voice => voice.name === selectedName) || null;
+        saveAllSettingsToLocalStorage();
+    });
+    ttsRateInput.addEventListener('input', () => { // inputイベントでリアルタイム更新
+        ttsRate = parseFloat(ttsRateInput.value);
+        ttsRateValue.textContent = ttsRate.toFixed(1);
+        saveAllSettingsToLocalStorage(); // スライダー操作時に設定を保存
+    });
+    ttsPitchInput.addEventListener('input', () => { // inputイベントでリアルタイム更新
+        ttsPitch = parseFloat(ttsPitchInput.value);
+        ttsPitchValue.textContent = ttsPitch.toFixed(1);
+        saveAllSettingsToLocalStorage(); // スライダー操作時に設定を保存
+    });
+    ttsVolumeInput.addEventListener('input', () => { // inputイベントでリアルタイム更新
+        ttsVolume = parseFloat(ttsVolumeInput.value);
+        ttsVolumeValue.textContent = ttsVolume.toFixed(1);
+        saveAllSettingsToLocalStorage(); // スライダー操作時に設定を保存
+    });
+
+
+    exportCsvButton.addEventListener('click', exportSettingsAsCsv);
+    importCsvInput.addEventListener('change', importSettingsFromCsv);
+
+    exportAllHistoryButton.addEventListener('click', exportAllChatSummaries);
+    importAllHistoryInput.addEventListener('change', importAllChatSummaries);
+
+    deleteSelectedButton.addEventListener('click', deleteSelectedMessages);
+    editSelectedButton.addEventListener('click', openEditMessageModal);
+    playSelectedButton.addEventListener('click', playSelectedMessages);
+    stopSpeechButton.addEventListener('click', () => {
+        window.speechSynthesis.cancel();
+        updateSpeechControlButtonVisibility();
+    });
+
+    micButton.addEventListener('click', () => {
+        if (!checkApiKey()) return;
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target == personaModal) { 
+            personaModal.style.display = 'none';
+            saveAllSettingsToLocalStorage(); // モーダルを閉じるときに設定を保存
+        }
+        if (event.target == settingsModal) {
+            settingsModal.style.display = 'none';
+            saveAllSettingsToLocalStorage(); // モーダルを閉じるときに設定を保存
+        }
+        if (event.target == editMessageModal) editMessageModal.style.display = 'none';
+        if (event.target == pdfViewerModal) {
+            pdfViewerModal.style.display = 'none';
+            pdfFrame.src = '';
+        }
+    });
+    
+    closeChatHistoryListModal.addEventListener('click', () => { chatHistoryListModal.style.display = 'none'; });
+    chatHistorySearchInput.addEventListener('input', () => displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder));
+    
+    sortBySelect.addEventListener('change', (event) => {
+        currentSortBy = event.target.value;
+        saveAllSettingsToLocalStorage(); // 並べ替え設定をlocalStorageに保存
+        displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+    });
+
+    sortOrderButton.addEventListener('click', () => {
+        currentSortOrder = (currentSortOrder === 'asc' ? 'desc' : 'asc');
+        saveAllSettingsToLocalStorage(); // 並べ替え設定をlocalStorageに保存
+        sortOrderIcon.textContent = (currentSortOrder === 'asc' ? '↑' : '↓');
+        displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+    });
+
+    selectAllHistoryButton.addEventListener('click', () => {
+        document.querySelectorAll('.history-item-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    });
+    deselectAllHistoryButton.addEventListener('click', () => {
+        document.querySelectorAll('.history-item-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    });
+    deleteSelectedHistoryButton.addEventListener('click', () => {
+        const checkedCheckboxes = document.querySelectorAll('.history-item-checkbox:checked');
+        if (checkedCheckboxes.length === 0) {
+            alert('削除する項目を選択してください。');
+            return;
+        }
+        if (confirm(`${checkedCheckboxes.length}件の履歴を削除しますか？\nこの変更はJSONファイルにエクスポートするまで永続化されません。`)) {
+            const filenamesToDelete = Array.from(checkedCheckboxes).map(checkbox => checkbox.dataset.filename);
+            
+            allChatSummaries = allChatSummaries.filter(summary => !filenamesToDelete.includes(summary.filename)); // グローバル変数から削除
+            
+            displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+            alert(`${checkedCheckboxes.length}件の履歴を削除しました。変更を保存するには「全履歴をJSONで保存」をクリックしてください。`);
+        }
+    });
+    loadSelectedHistoryButton.addEventListener('click', () => {
+        const checkedCheckboxes = document.querySelectorAll('.history-item-checkbox:checked');
+        if (checkedCheckboxes.length === 0) {
+            alert('読み込む項目を選択してください。');
+            return;
+        }
+        
+        let selectedSummaries = [];
+        checkedCheckboxes.forEach(checkbox => {
+            const filenameToLoad = checkbox.dataset.filename;
+            const summary = allChatSummaries.find(s => s.filename === filenameToLoad); // グローバル変数から検索
+            if (summary) {
+                selectedSummaries.push(summary);
+            }
+        });
+
+        if (selectedSummaries.length > 0) {
+            selectedSummaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            loadChatFromSummary(selectedSummaries[0]);
+            chatHistoryListModal.style.display = 'none';
+            alert(`「${selectedSummaries[0].title}」を読み込みました。`);
+        } else {
+            alert('有効な履歴が選択されていません。');
+        }
+    });
+
+    closePdfViewerModal.addEventListener('click', () => {
+        pdfViewerModal.style.display = 'none';
+        pdfFrame.src = '';
+    });
+
+    // 絵文字ボタンのイベントリスナーを削除
+
+    // TTS関連のイベントリスナーは上で統合済み
+
+    // --- チャット関連の関数 ---
+
+    function startNewChat(isInitial) {
+        if (!isInitial && currentConversationHistory.length > 0) {
+            if (!confirm("現在のチャット内容を破棄しますか？\n（保存していない場合は失われます）")) {
+                return;
+            }
+        }
+        chatBox.innerHTML = '';
+        currentConversationHistory = []; // インメモリのチャット履歴をクリア
+        
+        saveChatSummaryButton.style.display = 'inline-flex';
+        loadChatHistoryButton.style.display = 'inline-flex';
+        printPdfButton.style.display = 'none';
+        newChatButton.style.display = 'inline-flex';
+        
+        deleteSelectedButton.style.display = 'none';
+        editSelectedButton.style.display = 'none';
+        playSelectedButton.style.display = 'none';
+        stopSpeechButton.style.display = 'none';
+
+        currentActiveSummaryData = null;
+        removeAttachedImage();
+
+        if (isInitial && !currentApiKey) {
+            addMessage("こんにちは！「API設定」ボタンからAPIキーを設定してください。", 'bot');
+            speakText("こんにちは！API設定ボタンからAPIキーを設定してください。");
+        } else {
+            const userName = userNameInput.value || 'あなた'; // UI要素から直接取得
+            const aiName = aiNameInput.value || 'AI'; // UI要素から直接取得
+            const greetingMessage = `こんにちは、${userName}さん！${aiName}です。何でも話しかけてください。`;
+            addMessage(greetingMessage, 'bot');
+            speakText(greetingMessage);
+        }
+        textInput.focus();
+        updateDeleteButtonVisibility();
+        // updateLocalStorageUsageDisplay(); // 削除
+    }
+
+    // チャット履歴のロードは、履歴リストからの選択に一本化
+    function loadChatHistory() {
+        // 何もせず、displayChatHistoryListが呼ばれるのを待つ
+        // startNewChat(true); // これは初回起動時に呼ばれる
+        updateDeleteButtonVisibility();
+    }
+
+    // 現在のチャット履歴の自動保存を削除
+    function saveChatHistory() {
+        // 現在のチャット履歴は「チャット保存」ボタンでのみファイルに保存される
+        // 自動保存は行わない
+    }
+
+    function handleUserInput(message) {
+        if (!message.trim() && !attachedImage) return;
+        addMessage(message, 'user', { image: attachedImage });
+        currentConversationHistory.push({ // グローバル変数にプッシュ
+            role: 'user', content: message, image: attachedImage,
+            timestamp: new Date().toISOString()
+        });
+        getAIResponse();
+        removeAttachedImage();
+    }
+
+    async function getAIResponse() {
+        if (!checkApiKey()) return;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${currentApiKey}`; // グローバル変数を使用
+        const thinkingMessage = addMessage('考え中...', 'bot');
+
+        let contents = currentConversationHistory.map(item => { // グローバル変数を使用
+            const parts = [];
+            if (item.content && item.content.trim() !== '') parts.push({ text: item.content });
+            if (item.role === 'user' && item.image) {
+                parts.push({ inlineData: { mimeType: item.image.mimeType, data: item.image.base64 } });
+            }
+            return { role: item.role === 'user' ? 'user' : 'model', parts: parts.length > 0 ? parts : [{ text: '' }] };
+        });
+
+        const requestBody = { contents };
+        const persona = personaTextarea.value.trim(); // UI要素から直接取得
+        if (persona) requestBody.systemInstruction = { parts: [{ text: persona }] };
+
+        try {
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+            if (thinkingMessage && thinkingMessage.parentNode) chatBox.removeChild(thinkingMessage);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`APIエラー: ${response.status} - ${errorData.error?.message || JSON.stringify(errorData)}`);
+            }
+            const data = await response.json();
+            if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                addMessage(aiResponse, 'bot');
+                if (soundOnOff.checked) { // UI要素から直接取得
+                    playNotificationSound(soundTypeSelect.value || 'sine'); // UI要素から直接取得
+                }
+                speakText(aiResponse);
+                currentConversationHistory.push({ role: 'assistant', content: aiResponse, timestamp: new Date().toISOString() }); // グローバル変数にプッシュ
+            } else {
+                 throw new Error("APIから有効な応答が返されませんでした。");
+            }
+        } catch (error) {
+            console.error('Fetchエラー:', error);
+            if (thinkingMessage && thinkingMessage.parentNode) chatBox.removeChild(thinkingMessage);
+            let errorMessage = `エラーが発生しました: ${error.message}`;
+            if (String(error.message).includes('429')) {
+                errorMessage = 'APIのリクエスト上限に達しました。しばらく時間をおいてから再度お試しください。';
+            }
+            addMessage(errorMessage, 'bot', { isError: true });
+            speakText(errorMessage);
+        }
+    }
+
+    function addMessage(text, sender, options = {}) {
+        const { isError = false, isSummary = false, timestamp = null, image = null } = options;
+        const messageElement = document.createElement('div');
+        let messageClass = sender === 'user' ? 'user-message' : (isError ? 'error-message' : (isSummary ? 'summary-message' : 'bot-message'));
+        messageElement.classList.add('message', messageClass);
+        const messageTimestamp = timestamp ? new Date(timestamp) : new Date();
+        messageElement.dataset.id = messageTimestamp.getTime();
+        if (!isSummary) {
+            messageElement.addEventListener('click', () => {
+                messageElement.classList.toggle('selected');
+                updateDeleteButtonVisibility();
+            });
+        }
+        if (image) {
+            const imgElement = document.createElement('img');
+            imgElement.src = `data:${image.mimeType};base64,${image.base64}`;
+            imgElement.classList.add('message-image');
+            messageElement.appendChild(imgElement);
+        }
+        const textElement = document.createElement('div');
+        textElement.classList.add('message-content-text');
+
+        const urlRegex = /(?:^|(?<=\s))\[?(https?:\/\/[^\s]+?)(?:\]|\)|\.)?(?=\s|$)/g;
+        let processedText = (text || '').replace(/\n/g, '<br>');
+        processedText = processedText.replace(urlRegex, (match, url) => {
+            let cleanUrl = url.replace(/^[.,!?:;\]\)]+|[.,!?:;\]\)]+$/g, '');
+            return `<a href="${cleanUrl}" target="_blank">${cleanUrl}</a>`;
+        });
+
+        textElement.innerHTML = processedText;
+
+        if(text || (!text && !image)) messageElement.appendChild(textElement);
+        const timestampElement = document.createElement('div');
+        timestampElement.classList.add('timestamp');
+        timestampElement.textContent = formatTimestamp(messageTimestamp);
+        messageElement.appendChild(timestampElement);
+        chatBox.appendChild(messageElement);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return messageElement;
+    }
+    
+    async function testApiKey() {
+        const keyToTest = apiKeyInput.value.trim();
+        if (!keyToTest) { alert('テストするAPIキーを入力してください。'); return; }
+        testKeyResult.textContent = 'テスト中...';
+        testKeyResult.className = '';
+        const testApiUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${keyToTest}`;
+        try {
+            const response = await fetch(testApiUrl);
+            if (response.ok) {
+                testKeyResult.textContent = '✅ APIキーは有効です。';
+                testKeyResult.className = 'test-success';
+            } else {
+                const errorData = await response.json();
+                testKeyResult.textContent = `❌ 無効なAPIキーです: ${errorData.error.message}`;
+                testKeyResult.className = 'test-failure';
+            }
+        } catch (error) {
+            console.error('APIキーテストエラー:', error);
+            testKeyResult.textContent = '❌ テストに失敗しました。ネットワーク接続を確認してください。';
+            testKeyResult.className = 'test-failure';
+        }
+    }
+
+    // --- チャット保存・履歴表示関連の関数 ---
+    async function createChatSummary() {
+        if (currentConversationHistory.length === 0) { alert('保存するチャットがありません。'); return; }
+        let statusMessage;
+        try {
+            statusMessage = addMessage(`チャット内容を分析して保存しています...`, 'bot');
+            const userName = userNameInput.value || 'あなた'; // UI要素から直接取得
+            const aiName = aiNameInput.value || 'AI'; // UI要素から直接取得
+
+            const conversationText = currentConversationHistory // グローバル変数を使用
+                .filter(item => !item.image)
+                .map(item => `${item.role === 'user' ? userName : aiName}: ${item.content || ''}`)
+                .join('\n');
+            
+            const today = new Date();
+            const formattedDateForFileName = `${today.getFullYear()}${('0' + (today.getMonth() + 1)).slice(-2)}${('0' + today.getDate()).slice(-2)}`;
+            const dateForSummaryData = today.toISOString();
+
+            const defaultSummaryPrompt = `以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  "title": "ここにタイトルを記述 (15文字程度)",\n  "summary": "ここに会話の要約を記述 (第三者の視点から自然な文章で)"\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---`;
+            let summaryPromptTemplate = summaryPromptTextarea.value.trim() || defaultSummaryPrompt; // UI要素から直接取得
+            
+            const summaryPrompt = summaryPromptTemplate.replace('{CONVERSATION_HISTORY}', conversationText);
+
+            const summaryApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${currentApiKey}`; // グローバル変数を使用
+            const summaryContents = [{ role: 'user', parts: [{ text: summaryPrompt }] }];
+            const summaryResponse = await fetch(summaryApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: summaryContents }) });
+            
+            if (!summaryResponse.ok) {
+                const errorData = await summaryResponse.json(); 
+                throw new Error(`概要生成APIエラー: ${summaryResponse.status} - ${errorData.error?.message || JSON.stringify(errorData)}`);
+            }
+            const data = await summaryResponse.json();
+            let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+
+            let title = '無題のチャット';
+            let summary = '概要が生成されませんでした。';
+
+            try {
+                const cleanGeneratedText = generatedText.replace(/```json\n?|\n?```/g, '').trim();
+                const parsedContent = JSON.parse(cleanGeneratedText);
+                if (parsedContent.title) {
+                    title = parsedContent.title.trim();
+                }
+                if (parsedContent.summary) {
+                    summary = parsedContent.summary.trim();
+                }
+            } catch (jsonError) {
+                console.warn("AI応答のJSON解析に失敗しました。生のテキストからタイトルと概要を試みます。", jsonError);
+                const lines = generatedText.split(/[\n\r]+/);
+                if (lines.length > 0) {
+                    title = lines[0].replace(/^\*\*タイトル:\*\*\s*/, '').trim();
+                    if (title === '') title = '無題のチャット';
+                    let remainingSummary = lines.slice(1).join('\n').trim();
+                    summary = remainingSummary.replace(/^\*\*概要:\*\*\s*/, '').trim();
+                    if (summary === '') summary = '概要が生成されませんでした。';
+                }
+            }
+
+            const safeTitleForFilename = title.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50); 
+            const filename = `${formattedDateForFileName}_${safeTitleForFilename}.md`;
+
+            const chatSummaryData = { 
+                title, 
+                summary, 
+                history: [...currentConversationHistory], // 現在の履歴をコピー
+                date: dateForSummaryData,
+                filename: filename
+            };
+            
+            downloadChatSummaryMarkdown(chatSummaryData, chatSummaryData.filename);
+            
+            if (statusMessage && statusMessage.parentNode) chatBox.removeChild(statusMessage);
+            
+            // グローバル変数allChatSummariesに追加
+            saveChatSummaryToMemory(chatSummaryData);
+            alert(`チャットを保存しました: ${chatSummaryData.title}\n（履歴リストへの追加、及びJSONファイルへのエクスポートが行われました）`);
+            displayChatSummaryInChatBox(chatSummaryData);
+            currentActiveSummaryData = chatSummaryData;
+            printPdfButton.style.display = 'inline-flex';
+            
+        } catch (error) {
+            console.error('チャット保存プロセスエラー:', error);
+            if (statusMessage && statusMessage.parentNode) {
+                statusMessage.textContent = `チャットの保存に失敗しました: ${error.message}`;
+                statusMessage.className = 'message error-message';
+            } else { addMessage(`チャットの保存に失敗しました: ${error.message}`, 'bot', { isError: true }); }
+        }
+    }
+
+    // チャット概要をグローバル変数（インメモリ）に保存する
+    function saveChatSummaryToMemory(chatSummaryData) {
+        const existingIndex = allChatSummaries.findIndex(item => item.filename === chatSummaryData.filename);
+        if (existingIndex > -1) {
+            allChatSummaries[existingIndex] = chatSummaryData;
+        } else {
+            allChatSummaries.push(chatSummaryData);
+        }
+    }
+
+    function displayChatSummaryInChatBox(summaryData) {
+        chatBox.innerHTML = '';
+        
+        const filenameElement = document.createElement('div');
+        filenameElement.classList.add('message', 'summary-message');
+        const displayDate = summaryData.date ? formatTimestamp(new Date(summaryData.date)) : '不明な日時';
+        filenameElement.innerHTML = `<h3>ファイル名: ${summaryData.filename}</h3><p>保存日時: ${displayDate}</p>`;
+        chatBox.appendChild(filenameElement);
+
+        const summaryElement = document.createElement('div');
+        summaryElement.classList.add('message', 'summary-message');
+        summaryElement.innerHTML = `<h2>${summaryData.title}</h2><p>${summaryData.summary.replace(/\n/g, '<br>')}</p><hr><h3>チャット履歴 (保存時)</h3>`;
+        chatBox.appendChild(summaryElement);
+
+        currentConversationHistory = summaryData.history; // インメモリのチャット履歴を更新
+        summaryData.history.forEach(item => {
+            addMessage(item.content, item.role === 'user' ? 'user' : 'bot', { timestamp: item.timestamp, image: item.image });
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+        updateDeleteButtonVisibility();
+        currentActiveSummaryData = summaryData;
+        printPdfButton.style.display = 'inline-flex';
+    }
+
+
+    function displayChatHistoryList(searchTerm = '', sortBy = 'date', sortOrder = 'desc') {
+        chatHistoryList.innerHTML = '';
+        const summariesToDisplay = [...allChatSummaries]; // グローバル変数からコピー
+
+        const filteredSummaries = summariesToDisplay.filter(summary => {
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            const filename = (summary.filename || '').toLowerCase();
+            const title = (summary.title || '').toLowerCase();
+            const date = (summary.date ? formatTimestamp(new Date(summary.date)) : '').toLowerCase();
+
+            return filename.includes(lowerCaseSearchTerm) ||
+                   title.includes(lowerCaseSearchTerm) ||
+                   date.includes(lowerCaseSearchTerm);
+        });
+
+        filteredSummaries.sort((a, b) => {
+            let compareA, compareB;
+
+            if (sortBy === 'date') {
+                compareA = new Date(a.date);
+                compareB = new Date(b.date);
+            } else if (sortBy === 'title') {
+                compareA = a.title || '';
+                compareB = b.title || '';
+            }
+
+            let comparison = 0;
+            if (compareA > compareB) {
+                comparison = 1;
+            } else if (compareA < compareB) {
+                comparison = -1;
+            }
+
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+
+        if (filteredSummaries.length === 0) {
+            chatHistoryList.innerHTML = '<li>保存されたチャット履歴はありません。</li>';
+            if (searchTerm) {
+                chatHistoryList.innerHTML = `<li>「${searchTerm}」に一致する履歴は見つかりませんでした。</li>`;
+            }
+            return;
+        }
+
+        filteredSummaries.forEach((summary) => {
+            const listItem = document.createElement('li');
+            const displayDate = summary.date ? formatTimestamp(new Date(summary.date)) : '不明な日時';
+            
+            listItem.innerHTML = `
+                <input type="checkbox" class="history-item-checkbox" data-filename="${summary.filename}">
+                <div class="history-item-content">
+                    <div class="title">${summary.title}</div>
+                    <div class="date-time">${displayDate}</div>
+                </div>
+            `;
+            
+            chatHistoryList.appendChild(listItem);
+        });
+    }
+    
+    // グローバル変数からチャット概要を削除する
+    function deleteChatSummaryByFilename(filenameToDelete) {
+        allChatSummaries = allChatSummaries.filter(summary => summary.filename !== filenameToDelete);
+        displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+    }
+
+    function loadChatFromSummary(summaryData) {
+        chatBox.innerHTML = '';
+        currentConversationHistory = summaryData.history; // インメモリのチャット履歴を更新
+        displayChatSummaryInChatBox(summaryData); 
+        
+        saveChatSummaryButton.style.display = 'inline-flex';
+        loadChatHistoryButton.style.display = 'inline-flex';
+        newChatButton.style.display = 'inline-flex';
+        deleteSelectedButton.style.display = 'none';
+        editSelectedButton.style.display = 'none';
+        playSelectedButton.style.display = 'none';
+        stopSpeechButton.style.display = 'none';
+
+        updateDeleteButtonVisibility();
+
+        currentActiveSummaryData = summaryData;
+        printPdfButton.style.display = 'inline-flex';
+    }
+
+    function downloadChatSummaryMarkdown(summaryData, filename) {
+        let markdownContent = `# ${summaryData.title}\n\n`;
+        markdownContent += `**保存日時:** ${formatTimestamp(new Date(summaryData.date))}\n\n`;
+        markdownContent += `## 概要\n\n`;
+        const summaryContent = summaryData.summary.replace(/<br>/g, '\n'); 
+        summaryContent.split('\n').forEach(line => { markdownContent += `> ${line}\n`; });
+        markdownContent += `\n---\n\n`;
+        markdownContent += `# チャット履歴\n\n`;
+
+        const userName = userNameInput.value || 'ユーザー'; // UI要素から直接取得
+        const aiName = aiNameInput.value || 'AI'; // UI要素から直接取得
+        
+        summaryData.history.forEach(item => {
+            const speaker = item.role === 'user' ? userName : aiName;
+            const timestamp = formatTimestamp(new Date(item.timestamp));
+            markdownContent += `**${speaker}** (${timestamp}):\n`;
+            if (item.image) markdownContent += `> (画像添付)\n`;
+            if (item.content) item.content.split('\n').forEach(line => { markdownContent += `> ${line}\n`; });
+            markdownContent += `\n`;
+        });
+
+        downloadFile(markdownContent, filename, 'text/markdown;charset=utf-8;'); // downloadMarkdownを汎用関数に修正
+    }
+
+    // --- PDF印刷/プレビュー関連の関数 ---
+    async function showPdfPreviewOfChatSummary() {
+        if (!currentActiveSummaryData) {
+            alert('PDFを生成するチャット履歴がありません。');
+            return;
+        }
+
+        const userName = userNameInput.value || 'ユーザー'; // UI要素から直接取得
+        const aiName = aiNameInput.value || 'AI'; // UI要素から直接取得
+        
+        let contentForPdf = `
+            <div style="font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif; line-height: 1.6; padding: 20px; color: #333; margin: 0; background-color: #fff;">
+                <h1 style="color: #2e8b57; border-bottom: 2px solid #eee; padding-bottom: 5px; font-size: 1.8em; margin-bottom: 15px;">${currentActiveSummaryData.title}</h1>
+                <p><strong>ファイル名:</strong> ${currentActiveSummaryData.filename}</p>
+                <p><strong>保存日時:</strong> ${formatTimestamp(new Date(currentActiveSummaryData.date))}</p>
+                
+                <h2 style="color: #3cb371; font-size: 1.5em; margin-top: 25px; margin-bottom: 10px;">概要</h2>
+                <div class="summary-content">
+                    <p style="margin-top: 5px; margin-bottom: 0;">${currentActiveSummaryData.summary.replace(/\n/g,'<br>')}</p>
+                </div>
+                
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 20px 0;">
+                <h2 style="color: #3cb371; font-size: 1.5em; margin-top: 25px; margin-bottom: 10px;">チャット履歴</h2>
+                <div class="chat-log">`;
+
+        currentActiveSummaryData.history.forEach(item => {
+            const speaker = item.role === 'user' ? userName : aiName;
+            const messageStyle = `margin-bottom: 5px; padding: 8px 12px; border-radius: 8px; max-width: 100%; word-wrap: break-word; page-break-inside: avoid; background-color: ${item.role === 'user' ? '#e0f0e0' : '#f0f0f0'}; ${item.role === 'user' ? 'text-align: left; margin-left: 0; border-bottom-right-radius: 8px; border-bottom-left-radius: 5px;' : 'text-align: left; border-bottom-left-radius: 5px;'};`; /* 修正適用 */
+            const timestampStyle = `font-size: 0.75em; color: #888; margin-top: 2px; display: block; ${item.role === 'user' ? 'text-align: left;' : 'text-align: left;'};`;
+
+            contentForPdf += `<div class="message" style="${messageStyle}">
+                                <span class="speaker" style="font-weight: bold; margin-bottom: 0px; display: block;">${speaker}</span>`;
+            if (item.image && item.image.base64) {
+                contentForPdf += `<img src="data:${item.image.mimeType};base64,${item.image.base64}" class="message-image" alt="添付画像" style="max-width: 80%; height: auto; border-radius: 5px; margin-top: 5px; display: block; margin-left: auto; margin-right: auto;"><br>`;
+            }
+            if (item.content) {
+                contentForPdf += `<div class="message-content" style="margin-top: 2px;">${item.content.replace(/\n/g,'<br>')}</div>`;
+            }
+            contentForPdf += `<span class="timestamp" style="${timestampStyle}">(${formatTimestamp(new Date(item.timestamp))})</span>
+                            </div>`;
+        });
+
+        contentForPdf += `</div></div>`;
+
+        const options = {
+            margin: 10,
+            filename: `${currentActiveSummaryData.title}_${toDateString(new Date(currentActiveSummaryData.date))}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, logging: false, dpi: 192, letterRendering: true, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            const element = document.createElement('div');
+            element.innerHTML = contentForPdf;
+
+            const worker = html2pdf().from(element).set(options);
+
+            const pdfDoc = await worker.toPdf().get('pdf');
+            pdfDoc.setProperties({
+                title: currentActiveSummaryData.title,
+                subject: currentActiveSummaryData.summary,
+                author: userName,
+                creator: 'Myチャット履歴 Ver1.06',
+                keywords: 'chat, summary, AI'
+            });
+
+            const pdfBlob = await pdfDoc.output('blob');
+
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            pdfFrame.src = pdfUrl;
+            pdfViewerModal.style.display = 'block';
+
+            downloadPdfButton.onclick = () => {
+                const link = document.createElement('a');
+                link.href = pdfUrl;
+                link.download = options.filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(pdfUrl); // ダウンロード後にURLを解放
+            };
+
+        } catch (error) {
+            console.error('PDF生成エラー:', error);
+            alert('PDFの生成に失敗しました: ' + error.message);
+        }
+    }
+
+    // --- 音声認識関連の関数 ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isRecording = false;
+    let finalTranscript = '';
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ja-JP';
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.onstart = () => {
+            isRecording = true; finalTranscript = '';
+            micButton.classList.add('recording'); micButton.textContent = '🎙️';
+            textInput.placeholder = '録音中...';
+        };
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.results.length - 1; i >= 0; i--) {
+                if (event.results[i].isFinal) {
+                    transcript += event.results[i][0].transcript; 
+                }
+            }
+            finalTranscript += transcript;
+        };
+        recognition.onend = () => {
+            isRecording = false;
+            micButton.classList.remove('recording'); micButton.textContent = '🎤';
+            textInput.placeholder = 'メッセージを入力...';
+            if (finalTranscript.trim()) {
+                textInput.value += (textInput.value.length > 0 ? ' ' : '') + finalTranscript.trim();
+                textInput.focus();
+            }
+        };
+        recognition.onerror = (event) => {
+            console.error('音声認識エラー:', event.error);
+            if (isRecording) recognition.stop();
+        };
+    }
+
+    // --- 画像処理関連の関数 ---
+    function processImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('画像ファイルを選択してください。'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            imagePreview.src = dataUrl;
+            imagePreviewContainer.style.display = 'block';
+            const base64String = dataUrl.split(',')[1]; 
+            const mimeType = dataUrl.match(/:(.*?);/)[1]; 
+            attachedImage = { base64: base64String, mimeType: mimeType };
+        };
+        reader.readAsDataURL(file);
+    }
+    function handlePaste(event) {
+        const items = (event.clipboardData || window.clipboardData).items;
+        for (const item of items) {
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                event.preventDefault();
+                processImageFile(item.getAsFile());
+                return;
+            }
+        }
+    }
+    function handleFileSelect(event) { 
+        if (event.target.files && event.target.files[0]) {
+            processImageFile(event.target.files[0]); 
+        }
+    }
+    function removeAttachedImage() {
+        attachedImage = null; imagePreviewContainer.style.display = 'none';
+        imagePreview.src = ''; imageFileInput.value = '';
+    }
+
+    // --- CSVエクスポート/インポート関連関数 ---
+
+    function exportSettingsAsCsv() {
+        // UI要素から直接値を取得
+        const settings = {
+            persona: personaTextarea.value.trim(),
+            summaryPrompt: summaryPromptTextarea.value.trim(),
+            userName: userNameInput.value.trim(),
+            aiName: aiNameInput.value.trim(),
+            soundEnabled: soundOnOff.checked,
+            soundType: soundTypeSelect.value,
+            ttsEnabled: ttsOnOff.checked,
+            ttsVoiceName: ttsVoiceSelect.value,
+            ttsRate: ttsRate,
+            ttsPitch: ttsPitch,
+            ttsVolume: ttsVolume,
+        };
+
+        const csvRows = ['"Key","Value"'];
+        
+        for (const key in settings) {
+            let value = settings[key];
+            if (typeof value === 'string') {
+                value = value.replace(/\n/g, '\\n').replace(/"/g, '""');
+            }
+            csvRows.push(`"${key}","${value}"`);
+        }
+
+        const csvContent = csvRows.join('\n');
+        downloadFile(csvContent, 'ai_settings_backup.csv', 'text/csv;charset=utf-8;'); // 汎用ダウンロード関数を使用
+        alert('設定をCSVファイルとして保存しました。');
+    }
+
+    function importSettingsFromCsv(event) {
+        const file = event.target.files;
+        if (!file || file.length === 0) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const csvContent = e.target.result;
+            try {
+                const lines = csvContent.split('\n');
+                if (lines.length < 2) throw new Error("CSVファイルの内容が不正です。");
+
+                const settings = {};
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (!line.trim()) continue;
+
+                    // Improved regex to handle quoted commas within values
+                    const parts = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                    
+                    if (!parts || parts.length !== 2) { 
+                        console.warn(`行 ${i+1} のパースに失敗しました: ${line}`);
+                        continue;
+                    }
+
+                    let key = parts[0].replace(/^"|"$/g, '').replace(/""/g, '"'); 
+                    let value = parts[1].replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/""/g, '"'); 
+                    
+                    settings[key] = value;
+                }
+
+                personaTextarea.value = settings.persona || '';
+                summaryPromptTextarea.value = settings.summaryPrompt || '';
+                userNameInput.value = settings.userName || '';
+                aiNameInput.value = settings.aiName || '';
+                soundOnOff.checked = settings.soundEnabled === 'true' || settings.soundEnabled === true;
+                soundTypeSelect.value = settings.soundType || 'sine';
+                ttsOnOff.checked = settings.ttsEnabled === 'true' || settings.ttsEnabled === true;
+                ttsEnabled = ttsOnOff.checked;
+                if (ttsVoiceSelect) {
+                    ttsVoiceSelect.value = settings.ttsVoiceName || '';
+                }
+                ttsRate = parseFloat(settings.ttsRate) || 1.0;
+                ttsPitch = parseFloat(settings.ttsPitch) || 1.0;
+                ttsVolume = parseFloat(settings.ttsVolume) || 1.0;
+                ttsRateInput.value = ttsRate;
+                ttsRateValue.textContent = ttsRate.toFixed(1);
+                ttsPitchInput.value = ttsPitch;
+                ttsPitchValue.textContent = ttsPitch.toFixed(1);
+                ttsVolumeInput.value = ttsVolume;
+                ttsVolumeValue.textContent = ttsVolume.toFixed(1);
+
+                saveAllSettingsToLocalStorage(); // CSVから読み込んだ設定をlocalStorageに保存
+                loadVoices(); // 音声リストを再ロード
+
+                alert('設定をCSVファイルから読み込みました。');
+                event.target.value = '';
+
+            } catch (error) {
+                console.error('CSVインポートエラー:', error);
+                alert(`CSVファイルの読み込みに失敗しました: ${error.message}`);
+                event.target.value = '';
+            }
+        };
+        reader.onerror = () => {
+            alert('ファイルの読み込み中にエラーが発生しました。');
+            event.target.value = '';
+        };
+        reader.readAsText(file[0]); 
+    }
+
+    // --- 全チャット履歴のエクスポート/インポート関数 ---
+    function exportAllChatSummaries() {
+        if (allChatSummaries.length === 0) { // グローバル変数を使用
+            alert('エクスポートするチャット履歴がありません。');
+            return;
+        }
+        const jsonContent = JSON.stringify(allChatSummaries, null, 2); // グローバル変数を使用
+        const today = new Date();
+        const formattedDate = `${today.getFullYear()}${('0' + (today.getMonth() + 1)).slice(-2)}${('0' + today.getDate()).slice(-2)}`;
+        const filename = `my_chat_history_backup_${formattedDate}.json`;
+        downloadFile(jsonContent, filename, 'application/json;charset=utf-8;'); // 汎用ダウンロード関数を使用
+        alert('全チャット履歴をJSONファイルとして保存しました。');
+    }
+
+    function importAllChatSummaries(event) {
+        const file = event.target.files;
+        if (!file || file.length === 0) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedSummaries = JSON.parse(e.target.result);
+                if (!Array.isArray(importedSummaries)) {
+                    throw new Error("インポートされたファイル形式が不正です。");
+                }
+
+                if (confirm('既存のチャット履歴リストにインポートした履歴を追加しますか？（「キャンセル」を選択すると既存の履歴は全て上書きされます）')) {
+                    let existingSummaries = [...allChatSummaries]; // グローバル変数からコピー
+                    const mergedSummaries = [...existingSummaries];
+
+                    importedSummaries.forEach(importedSummary => {
+                        const existingIndex = mergedSummaries.findIndex(
+                            s => s.filename === importedSummary.filename
+                        );
+                        if (existingIndex > -1) {
+                            mergedSummaries[existingIndex] = importedSummary;
+                        } else {
+                            mergedSummaries.push(importedSummary);
+                        }
+                    });
+                    allChatSummaries = mergedSummaries; // グローバル変数を更新
+                    alert('チャット履歴をマージしました。');
+
+                } else {
+                    allChatSummaries = importedSummaries; // グローバル変数を上書き
+                    alert('チャット履歴を上書きしました。');
+                }
+                
+                startNewChat(true); 
+                displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
+
+            } catch (error) {
+                console.error('全チャット履歴のインポートエラー:', error);
+                alert(`全チャット履歴のインポートに失敗しました: ${error.message}`);
+            } finally {
+                event.target.value = '';
+            }
+        };
+        reader.onerror = () => {
+            alert('ファイルの読み込み中にエラーが発生しました。');
+            event.target.value = '';
+        };
+        reader.readAsText(file[0]);
+    }
+
+    // --- ユーティリティ関数 ---
+    function playNotificationSound(soundType = 'sine') {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+            oscillator.type = soundType;
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            let frequency = 440;
+            switch(soundType) {
+                case 'square':   frequency = 660; break;
+                case 'sawtooth': frequency = 220; break;
+                case 'triangle': frequency = 523; break;
+            }
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.start(); oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (e) { console.error("サウンドの再生に失敗しました:", e); }
+    }
+    function updateCurrentDateTime() {
+        const now = new Date();
+        const year = now.getFullYear(); const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const week = ['日','月','火','水','木','金','土'][now.getDay()];
+        const reiwaYear = year - 2018;
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        datetimeDisplay.textContent = `${year}年${month}月${day}日(${week})　令和${reiwaYear}年　${hours}時${minutes}分`;
+    }
+    function checkApiKey() {
+        if (!currentApiKey) { // グローバル変数を使用
+            alert('「API設定」ボタンからAPIキーを設定してください。');
+            settingsModal.style.display = 'block';
+            return false;
+        }
+        return true;
+    }
+    
+    // ファイルダウンロードを汎用関数化
+    function downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob); 
+        link.download = filename;
+        document.body.appendChild(link); 
+        link.click();
+        document.body.removeChild(link); 
+        URL.revokeObjectURL(link.href);
+    }
+    
+    function toDateString(date) { return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`; }
+    function formatTimestamp(date) { return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`; }
+
+    function showHelp() {
+        const helpContent = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Ｍｙチャット履歴 - 取扱説明書</title><style>
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.7;margin:0;padding:25px;color:#333;background-color:#f9f9f9}
+        .container{max-width:800px;margin:0 auto;background-color:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.08);position:relative;}
+        h1{color:#2e8b57;border-bottom:3px solid #66cdaa;padding-bottom:10px;font-size:1.8em}
+        h2{color:#3cb371;border-bottom:2px solid #e0f2f1;padding-bottom:8px;margin-top:30px;font-size:1.5em}
+        h3{color:#2e8b57;border-left:5px solid #66cdaa;padding-left:10px;font-size:1.2em}
+        ul{list-style-type:none;padding-left:0}
+        li{margin-bottom:15px;padding-left:20px;position:relative}
+        li::before{content:'✓';color:#3cb371;position:absolute;left:0;font-weight:bold}
+        p{text-align:justify}
+        code{background-color:#eef;color:#d63384;padding:2px 6px;border-radius:4px;font-family:'Courier New',Courier,monospace}
+        .icon{display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;color:#fff;font-size:1.1em;vertical-align:middle;margin-right:5px}
+        .save-icon{background-color:#3cb371}
+        .important{background-color:#fffbe6;border:1px solid #ffeeba;border-left:5px solid #ffc107;padding:15px 20px;margin:20px 0;border-radius:5px}
+        .important strong{color:#856404}
+        .button-desc{font-weight:bold}
+        .close-help-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+        .close-help-button:hover {
+            background-color: #d32f2f;
+        }
+        </style></head><body><div class="container">
+        <button class="close-help-button" onclick="window.close()">&times;</button>
+        <h1>Ｍｙチャット履歴 - 取扱説明書</h1>
+        <p>このアプリケーションは、AIとの自由な対話を記録し、要約を生成してファイルとして保存・管理できるツールです。</p>
+        <div class="important"><p><strong>【重要】</strong> 初めてご利用になる際は、右上の「<b>API設定</b>」ボタンからご自身のGemini APIキーを設定してください。このAPIキーはブラウザに保存されず、セッション中にのみ有効です。</p></div>
+        <div class="important"><p><strong>【重要】</strong> チャット履歴および設定は自動で保存されません。「<b>各種設定</b>」内のボタンから明示的にJSONやCSVファイルを保存・読み込みしてください。</p></div>
+        <h2>主な機能</h2>
+        <h3>1. AIとのチャット</h3>
+        <ul>
+            <li><span class="button-desc">メッセージの送信:</span> <code>Enter</code>キーで送信、<code>Shift + Enter</code>で改行できます。</li>
+            <li><span class="button-desc">画像の添付:</span> クリップボタン<code>📎</code>か、入力欄へのペーストで画像を添付できます。</li>
+            <li><span class="button-desc">音声入力:</span> マイクボタン<code>🎤</code>でチャット内容の音声入力が可能です。</li>
+            <li><span class="button-desc">メッセージの削除:</span> 各メッセージをクリックで選択し、ヘッダーの「<b>選択を削除</b>」で削除できます。</li>
+            <li><span class="button-desc">メッセージの編集:</span> 各メッセージをクリックで選択し、ヘッダーの「<b>選択を編集</b>」で編集できます。</li>
+            <li><span class="button-desc">メッセージの再生:</span> 各メッセージをクリックで選択し、ヘッダーの「<b>選択を再生</b>」で音声読み上げできます。</li>
+            <li><span class="button-desc">音声停止:</span> 音声が再生中の場合、ヘッダーの「<b>音声停止</b>」ボタンで再生を停止できます。</li>
+        </ul>
+        <h3>2. チャットの保存と履歴管理</h3>
+        <ul>
+            <li><span class="icon save-icon">✈️</span> <span class="button-desc">チャット保存:</span> 現在の会話内容をAIが分析し、タイトルと概要を生成してマークダウン形式でダウンロードします。同時に「履歴一覧」に表示されるリストに追加されます。（永続化には「全履歴をJSONで保存」が必要です。）</li>
+            <li><span class="button-desc">履歴一覧:</span> ヘッダーの「<b>履歴一覧</b>」ボタンで、現在読み込まれているチャット履歴のリストを表示し、過去のチャットを呼び出すことができます。</li>
+            <li><span class="button-desc">新しいチャット:</span> 現在の会話を破棄して、新しいチャットを開始します。（保存していない内容は失われます。）</li>
+        </ul>
+        <h3>3. ヘッダーの各種ボタン</h3>
+        <ul>
+            <li><span class="button-desc">各種設定:</span> AIの性格、チャット概要生成プロンプト、あなたとAIの名前、サウンド、TTS設定などを設定できます。<b>「設定をCSVで保存」/「設定をCSVから読込」で設定のバックアップ・復元が可能です。</b>
+                <br><b>「全履歴をJSONで保存」/「全履歴をJSONから読込」で全チャット履歴のバックアップ・復元が可能です。</b>
+            </li>
+            <li><span class="button-desc">API設定:</b> Gemini APIキーを設定・テスト・クリアできます。キーはブラウザに保存されず、このセッション中のみ有効です。</li>
+            <li><span class="button-desc">PDFプレビュー:</b> 現在のチャット内容をPDF形式でプレビュー表示・ダウンロードできます。</li>
+        </ul>
+        <h2>注意事項</h2>
+        <ul>
+            <li>APIキー、会話履歴、チャット履歴、各種設定は、**ブラウザには自動で保存されません。** データの保存には、明示的に「各種設定」内のエクスポート機能をご利用ください。</li>
+            <li>Gemini APIの利用料金は、APIキーを発行したご自身のGoogleアカウントに準じます。利用量にご注意ください。</li>
+        </ul></div></body></html>`;
+        const helpWindow = window.open('', '_blank');
+        helpWindow.document.write(helpContent);
+        helpWindow.document.close();
+    }
+
+    // --- メッセージ削除・編集・再生関連の関数 ---
+    function updateDeleteButtonVisibility() {
+        const selectedMessages = document.querySelectorAll('.message.selected');
+        deleteSelectedButton.style.display = selectedMessages.length > 0 ? 'block' : 'none';
+        editSelectedButton.style.display = selectedMessages.length === 1 ? 'block' : 'none';
+        playSelectedButton.style.display = selectedMessages.length > 0 ? 'block' : 'none';
+        // 音声停止ボタンは別のロジックで制御されるため、ここでは変更しない
+    }
+    function deleteSelectedMessages() {
+        const selectedMessages = document.querySelectorAll('.message.selected');
+        if (selectedMessages.length === 0) { alert('削除するメッセージが選択されていません。'); return; }
+        if (confirm(`選択した ${selectedMessages.length} 件のメッセージを削除しますか？\n（この変更はチャットを保存するまで永続化されません）`)) {
+            const idsToDelete = new Set();
+            selectedMessages.forEach(msg => {
+                idsToDelete.add(msg.dataset.id);
+                msg.remove();
+            });
+            currentConversationHistory = currentConversationHistory.filter(item => !idsToDelete.has(String(new Date(item.timestamp).getTime()))); // グローバル変数を更新
+            updateDeleteButtonVisibility();
+        }
+    }
+
+    function openEditMessageModal() {
+        const selectedMessage = document.querySelector('.message.selected');
+        if (!selectedMessage) return;
+
+        editingMessageElement = selectedMessage;
+        const messageText = selectedMessage.querySelector('.message-content-text')?.textContent || '';
+
+        editMessageTextarea.value = messageText;
+        editMessageModal.style.display = 'block';
+    }
+
+    saveEditedMessageButton.addEventListener('click', () => {
+        if (!editingMessageElement) return;
+
+        const newText = editMessageTextarea.value;
+        const messageId = editingMessageElement.dataset.id;
+
+        const textElement = editingMessageElement.querySelector('.message-content-text');
+        if (textElement) {
+            const urlRegex = /(?:^|(?<=\s))\[?(https?:\/\/[^\s]+?)(?:\]|\)|\.)?(?=\s|$)/g;
+            let processedText = newText.replace(/\n/g, '<br>');
+            processedText = processedText.replace(urlRegex, (match, url) => {
+                let cleanUrl = url.replace(/^[.,!?:;\]\)]+|[.,!?:;\]\)]+$/g, '');
+                return `<a href="${cleanUrl}" target="_blank">${cleanUrl}</a>`;
+            });
+            textElement.innerHTML = processedText;
+        } else if (!editingMessageElement.querySelector('.message-image')) {
+             const newTextElement = document.createElement('div');
+             newTextElement.classList.add('message-content-text');
+             const urlRegex = /(?:^|(?<=\s))\[?(https?:\/\/[^\s]+?)(?:\]|\)|\.)?(?=\s|$)/g;
+             let processedText = newText.replace(/\n/g, '<br>');
+             processedText = processedText.replace(urlRegex, (match, url) => {
+                 let cleanUrl = url.replace(/^[.,!?:;\]\)]+|[.,!?:;\]\)]+$/g, '');
+                 return `<a href="${cleanUrl}" target="_blank">${cleanUrl}</a>`;
+             });
+             newTextElement.innerHTML = processedText;
+             editingMessageElement.prepend(newTextElement);
+        }
+
+        const messageIndex = currentConversationHistory.findIndex(item => String(new Date(item.timestamp).getTime()) === messageId); // グローバル変数から検索
+        if (messageIndex !== -1) {
+            currentConversationHistory[messageIndex].content = newText; // グローバル変数を更新
+        }
+
+        editingMessageElement.classList.remove('selected');
+        editingMessageElement = null;
+        editMessageModal.style.display = 'none';
+        updateDeleteButtonVisibility();
+    });
+
+    closeEditMessageModal.addEventListener('click', () => {
+        editingMessageElement = null;
+        editMessageModal.style.display = 'none';
+    });
+
+    function playSelectedMessages() {
+        if (!ttsEnabled || !window.speechSynthesis) {
+            alert("音声読み上げ機能がオフになっているか、ブラウザが対応していません。");
+            return;
+        }
+
+        window.speechSynthesis.cancel(); // 新しい再生前に停止
+
+        let combinedText = '';
+        const selectedMessages = document.querySelectorAll('.message.selected');
+        
+        // 選択されたメッセージをタイムスタンプ順にソート
+        const sortedSelectedMessages = Array.from(selectedMessages).sort((a, b) => {
+            return parseInt(a.dataset.id) - parseInt(b.dataset.id);
+        });
+
+        sortedSelectedMessages.forEach((message, index) => {
+            const messageTextElement = message.querySelector('.message-content-text');
+            if (messageTextElement && messageTextElement.textContent.trim() !== '') {
+                combinedText += messageTextElement.textContent.trim();
+                if (index < sortedSelectedMessages.length - 1) {
+                    combinedText += '。';
+                }
+            } else if (message.querySelector('.message-image')) {
+                combinedText += '（画像）';
+                if (index < sortedSelectedMessages.length - 1) {
+                    combinedText += '。';
+                }
+            }
+        });
+
+        if (combinedText.trim() === '') {
+            alert('選択されたメッセージには読み上げ可能なテキストが含まれていません。');
+            return;
+        }
+
+        speakText(combinedText);
+    }
+
+
+    // --- TTS関連関数 ---
+    function loadVoices() {
+        if (!window.speechSynthesis) {
+            console.warn("SpeechSynthesis API not supported.");
+            ttsOnOff.checked = false;
+            ttsOnOff.disabled = true;
+            ttsVoiceSelect.disabled = true;
+            ttsVoiceSelect.innerHTML = '<option value="">音声非対応</option>';
+            ttsRateInput.disabled = true;
+            ttsPitchInput.disabled = true;
+            ttsVolumeInput.disabled = true;
+            return;
+        }
+
+        availableVoices = window.speechSynthesis.getVoices();
+        ttsVoiceSelect.innerHTML = '';
+
+        let japaneseVoices = availableVoices.filter(voice => voice.lang.startsWith('ja'));
+        let defaultVoiceName = null;
+
+        if (japaneseVoices.length > 0) {
+            japaneseVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = voice.name;
+                ttsVoiceSelect.appendChild(option);
+                if (!defaultVoiceName || voice.default) {
+                    defaultVoiceName = voice.name;
+                }
+            });
+        } else {
+            availableVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = voice.name;
+                ttsVoiceSelect.appendChild(option);
+                if (!defaultVoiceName || voice.default) {
+                    defaultVoiceName = voice.name;
+                }
+            });
+            console.warn("No Japanese voices found. Falling back to available voices.");
+        }
+
+        // TTS音声設定の初期値を適用 (UI要素の現在の値)
+        const currentVoiceName = ttsVoiceSelect.value;
+        if (currentVoiceName && availableVoices.some(voice => voice.name === currentVoiceName)) {
+            selectedTtsVoice = availableVoices.find(voice => voice.name === currentVoiceName);
+        } else if (defaultVoiceName) {
+            ttsVoiceSelect.value = defaultVoiceName;
+            selectedTtsVoice = availableVoices.find(voice => voice.name === defaultVoiceName);
+        } else {
+            selectedTtsVoice = null;
+        }
+    }
+
+    if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function speakText(text) {
+        if (!ttsEnabled || !window.speechSynthesis || text.trim() === '') {
+            return;
+        }
+
+        window.speechSynthesis.cancel(); // 新しい発話を開始する前に既存のものを停止
+
+        // 絵文字、アスタリスク、バッククォートを除去
+        // \p{Emoji} はUnicodeプロパティエスケープで、多くの絵文字にマッチします（uフラグが必要）
+        let speechText = text.replace(/\p{Emoji}/gu, '').replace(/\*/g, '').replace(/`/g, '');
+
+        // フィルタリング後にテキストが空になった場合は再生しない
+        if (speechText.trim() === '') {
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(speechText);
+        utterance.lang = 'ja-JP';
+
+        if (selectedTtsVoice) {
+            utterance.voice = selectedTtsVoice;
+        } else {
+            const defaultJapaneseVoice = availableVoices.find(voice => voice.lang.startsWith('ja'));
+            if (defaultJapaneseVoice) {
+                utterance.voice = defaultJapaneseVoice;
+            }
+        }
+        
+        utterance.rate = ttsRate;
+        utterance.pitch = ttsPitch;
+        utterance.volume = ttsVolume;
+
+        window.speechSynthesis.speak(utterance);
+        updateSpeechControlButtonVisibility(); // 発話開始時に音声停止ボタンを表示
+
+        utterance.onend = () => {
+            updateSpeechControlButtonVisibility(); // 発話終了時に音声停止ボタンを非表示
+        };
+        utterance.onerror = (event) => { // エラー発生時にも音声停止ボタンを非表示
+            console.error('TTSエラー:', event.error);
+            updateSpeechControlButtonVisibility(); 
+        };
+    }
+
+    // 音声停止ボタンの表示/非表示を更新する関数
+    function updateSpeechControlButtonVisibility() {
+        if (window.speechSynthesis.speaking && ttsEnabled) {
+            stopSpeechButton.style.display = 'block';
+        } else {
+            stopSpeechButton.style.display = 'none';
+        }
+    }
+
+    // アプリケーション起動時のデフォルト値設定
+    function loadSettingsFromMemoryOrDefault() {
+        // UI要素が空の場合にデフォルト値を設定
+        if (!personaTextarea.value) personaTextarea.value = '';
+        if (!summaryPromptTextarea.value) summaryPromptTextarea.value = 
+            `以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  "title": "ここにタイトルを記述 (15文字程度)",\n  "summary": "ここに会話の要約を記述 (第三者の視点から自然な文章で)"\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---`;
+        if (!userNameInput.value) userNameInput.value = 'ユーザー';
+        if (!aiNameInput.value) aiNameInput.value = 'AI';
+        
+        // チェックボックス/セレクトボックスはDOM初期化時にデフォルトが設定されていることが多い
+        // ここでは念のため、現在の状態をグローバル変数に反映
+        soundOnOff.checked = soundOnOff.checked;
+        soundTypeSelect.value = soundTypeSelect.value;
+        ttsOnOff.checked = ttsOnOff.checked;
+        ttsEnabled = ttsOnOff.checked;
+        
+        // TTS設定値の反映 (range inputの値は自動でDOMに設定されている)
+        ttsRate = parseFloat(ttsRateInput.value);
+        ttsPitch = parseFloat(ttsPitchInput.value);
+        ttsVolume = parseFloat(ttsVolumeInput.value);
+
+        ttsRateValue.textContent = ttsRate.toFixed(1);
+        ttsPitchValue.textContent = ttsPitch.toFixed(1);
+        ttsVolumeValue.textContent = ttsVolume.toFixed(1);
+    }
+</script>
+
+</body>
+</html>
