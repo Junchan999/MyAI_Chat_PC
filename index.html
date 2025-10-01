@@ -795,7 +795,7 @@
 <body>
 
 <header>
-    <h1>MyAI Chat History Ver2.00(ファイル保存版)</h1> <!-- タイトルに追記 -->
+    <h1>MyAI Chat History Ver2.10(ファイル保存版)</h1> <!-- タイトルに追記 -->
     <div class="header-controls">
         <div class="header-buttons">
             <button id="persona-button">各種設定</button>
@@ -883,6 +883,7 @@
                     <h3>チャット概要生成プロンプト</h3>
                     <p>チャット保存時の概要生成AIへの指示です。<br><code>{CONVERSATION_HISTORY}</code>に会話履歴が挿入されます。</p>
                     <textarea id="summary-prompt-textarea" placeholder="例：以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  &quot;title&quot;: &quot;ここにタイトルを記述 (15文字程度)&quot;,\n  &quot;summary&quot;: &quot;ここに会話の要約を記述 (第三者の視点から自然な文章で)&quot;\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---"></textarea>
+                    <button id="reset-summary-prompt-button" style="margin-top: 10px; background-color: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.15); white-space: nowrap;">デフォルトに戻す</button>
 
                     <h3>会話履歴の名前設定</h3>
                     <div class="name-setting-container" style="margin-bottom: 10px;">
@@ -1088,6 +1089,7 @@
     const deleteKeyButton = document.getElementById('delete-key-button');
     const testKeyResult = document.getElementById('test-key-result');
     const summaryPromptTextarea = document.getElementById('summary-prompt-textarea');
+    const resetSummaryPromptButton = document.getElementById('reset-summary-prompt-button'); // ★追加
 
     // CSVインポート関連
     const importCsvInput = document.getElementById('import-csv-input');
@@ -1148,6 +1150,7 @@
     let attachedImage = null;
     let editingMessageElement = null;
     let currentActiveSummaryData = null; // 現在表示中の概要データ
+    let currentChatUniqueId = null; // ★追加：現在のチャットセッションのユニークID
     let currentSortBy = 'date'; // 履歴リストの並べ替え基準
     let currentSortOrder = 'desc'; // 履歴リストの並べ替え順
     let ttsEnabled = true;
@@ -1397,6 +1400,14 @@
         saveAllSettingsToLocalStorage(); // スライダー操作時に設定を保存
     });
 
+    // ★追加: デフォルトに戻すボタンのイベントリスナー
+    resetSummaryPromptButton.addEventListener('click', () => {
+        const defaultSummaryPrompt = `以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  "title": "ここにタイトルを記述 (15文字程度)",\n  "summary": "ここに会話の要約を記述 (第三者の視点から自然な文章で)"\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---`;
+        summaryPromptTextarea.value = defaultSummaryPrompt;
+        saveAllSettingsToLocalStorage(); // リセットした値をlocalStorageに保存
+        alert('チャット概要生成プロンプトをデフォルトに戻しました。');
+    });
+
 
     exportCsvButton.addEventListener('click', exportSettingsAsCsv);
     importCsvInput.addEventListener('change', importSettingsFromCsv);
@@ -1470,9 +1481,11 @@
             return;
         }
         if (confirm(`${checkedCheckboxes.length}件の履歴を削除しますか？\nこの変更はJSONファイルにエクスポートするまで永続化されません。`)) {
-            const filenamesToDelete = Array.from(checkedCheckboxes).map(checkbox => checkbox.dataset.filename);
+            // ★変更：data-filename から data-chatid を取得
+            const chatIdsToDelete = Array.from(checkedCheckboxes).map(checkbox => checkbox.dataset.chatid);
             
-            allChatSummaries = allChatSummaries.filter(summary => !filenamesToDelete.includes(summary.filename)); // グローバル変数から削除
+            // ★変更：グローバル変数から chatId を使って削除
+            allChatSummaries = allChatSummaries.filter(summary => !chatIdsToDelete.includes(summary.chatId)); 
             
             displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
             alert(`${checkedCheckboxes.length}件の履歴を削除しました。変更を保存するには「全履歴をJSONで保存」をクリックしてください。`);
@@ -1487,8 +1500,10 @@
         
         let selectedSummaries = [];
         checkedCheckboxes.forEach(checkbox => {
-            const filenameToLoad = checkbox.dataset.filename;
-            const summary = allChatSummaries.find(s => s.filename === filenameToLoad); // グローバル変数から検索
+            // ★変更：data-filename から data-chatid を取得
+            const chatIdToLoad = checkbox.dataset.chatid;
+            // ★変更：グローバル変数から chatId を使って検索
+            const summary = allChatSummaries.find(s => s.chatId === chatIdToLoad); 
             if (summary) {
                 selectedSummaries.push(summary);
             }
@@ -1535,6 +1550,8 @@
         stopSpeechButton.style.display = 'none';
 
         currentActiveSummaryData = null;
+        // ★追加：新しいチャットセッションのユニークIDを生成
+        currentChatUniqueId = crypto.randomUUID(); 
         removeAttachedImage();
 
         if (isInitial && !currentApiKey) {
@@ -1704,13 +1721,14 @@
                 .join('\n');
             
             const today = new Date();
-            const formattedDateForFileName = `${today.getFullYear()}${('0' + (today.getMonth() + 1)).slice(-2)}${('0' + today.getDate()).slice(-2)}`;
+            const formattedDateForDownload = `${today.getFullYear()}${('0' + (today.getMonth() + 1)).slice(-2)}${('0' + today.getDate()).slice(-2)}`;
             const dateForSummaryData = today.toISOString();
 
             const defaultSummaryPrompt = `以下の会話履歴を基に、簡潔なタイトル（30文字程度）と、会話の要約を箇条書きにして作成し、JSON形式で出力してください。\n\n出力は以下のJSONフォーマットに従ってください。\n{\n  "title": "ここにタイトルを記述 (15文字程度)",\n  "summary": "ここに会話の要約を記述 (第三者の視点から自然な文章で)"\n}\n\n---\n[会話履歴]\n{CONVERSATION_HISTORY}\n---`;
             let summaryPromptTemplate = summaryPromptTextarea.value.trim() || defaultSummaryPrompt; // UI要素から直接取得
             
             const summaryPrompt = summaryPromptTemplate.replace('{CONVERSATION_HISTORY}', conversationText);
+            console.log("Summary Prompt sent to AI:", summaryPrompt); // ★追加: 送信されるプロンプトをログ出力
 
             const summaryApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${currentApiKey}`; // グローバル変数を使用
             const summaryContents = [{ role: 'user', parts: [{ text: summaryPrompt }] }];
@@ -1722,6 +1740,7 @@
             }
             const data = await summaryResponse.json();
             let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+            console.log("Raw AI Response for Summary:", generatedText); // ★追加: AIの生応答をログ出力
 
             let title = '無題のチャット';
             let summary = '概要が生成されませんでした。';
@@ -1747,26 +1766,35 @@
                 }
             }
 
-            const safeTitleForFilename = title.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50); 
-            const filename = `${formattedDateForFileName}_${safeTitleForFilename}.md`;
+            // ★変更：currentChatUniqueId がない場合のフォールバック（通常は startNewChat で設定済み）
+            if (!currentChatUniqueId) {
+                currentChatUniqueId = crypto.randomUUID();
+            }
 
+            // ダウンロードされるファイル名（動的に生成）
+            const safeTitleForDownload = title.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50); 
+            const downloadFilename = `${formattedDateForDownload}_${safeTitleForDownload}.md`;
+
+            // 内部管理用の chatSummaryData オブジェクト
             const chatSummaryData = { 
+                chatId: currentChatUniqueId, // ★追加：ユニークID
                 title, 
                 summary, 
                 history: [...currentConversationHistory], // 現在の履歴をコピー
                 date: dateForSummaryData,
-                filename: filename
+                filename: downloadFilename // ダウンロード用のファイル名を保持（表示用）
             };
             
-            downloadChatSummaryMarkdown(chatSummaryData, chatSummaryData.filename);
+            // マークダウンファイルとしてダウンロード
+            downloadChatSummaryMarkdown(chatSummaryData, downloadFilename);
             
             if (statusMessage && statusMessage.parentNode) chatBox.removeChild(statusMessage);
             
-            // グローバル変数allChatSummariesに追加
-            saveChatSummaryToMemory(chatSummaryData);
+            // グローバル変数allChatSummariesに追加または更新
+            saveChatSummaryToMemory(chatSummaryData); // ★変更：chatId を使って更新される
             alert(`チャットを保存しました: ${chatSummaryData.title}\n（履歴リストへの追加、及びJSONファイルへのエクスポートが行われました）`);
             displayChatSummaryInChatBox(chatSummaryData);
-            currentActiveSummaryData = chatSummaryData;
+            currentActiveSummaryData = chatSummaryData; // 現在アクティブな概要データを更新
             printPdfButton.style.display = 'inline-flex';
             
         } catch (error) {
@@ -1778,13 +1806,14 @@
         }
     }
 
-    // チャット概要をグローバル変数（インメモリ）に保存する
+    // チャット概要をグローバル変数（インメモリ）に保存する（または更新する）
     function saveChatSummaryToMemory(chatSummaryData) {
-        const existingIndex = allChatSummaries.findIndex(item => item.filename === chatSummaryData.filename);
+        // ★変更：chatId を使って既存の履歴を検索
+        const existingIndex = allChatSummaries.findIndex(item => item.chatId === chatSummaryData.chatId);
         if (existingIndex > -1) {
-            allChatSummaries[existingIndex] = chatSummaryData;
+            allChatSummaries[existingIndex] = chatSummaryData; // 既存の履歴を更新
         } else {
-            allChatSummaries.push(chatSummaryData);
+            allChatSummaries.push(chatSummaryData); // 新しい履歴として追加
         }
     }
 
@@ -1794,7 +1823,8 @@
         const filenameElement = document.createElement('div');
         filenameElement.classList.add('message', 'summary-message');
         const displayDate = summaryData.date ? formatTimestamp(new Date(summaryData.date)) : '不明な日時';
-        filenameElement.innerHTML = `<h3>ファイル名: ${summaryData.filename}</h3><p>保存日時: ${displayDate}</p>`;
+        // ★変更：ファイル名は summaryData.filename (ダウンロード用表示名) を使用
+        filenameElement.innerHTML = `<h3>ファイル名: ${summaryData.filename || '不明'}</h3><p>保存日時: ${displayDate}</p>`;
         chatBox.appendChild(filenameElement);
 
         const summaryElement = document.createElement('div');
@@ -1820,13 +1850,14 @@
 
         const filteredSummaries = summariesToDisplay.filter(summary => {
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
-            const filename = (summary.filename || '').toLowerCase();
+            // ★変更：summary.filename の代わりに summary.title と summary.chatId を検索対象にする（必要であればfilenameも）
             const title = (summary.title || '').toLowerCase();
             const date = (summary.date ? formatTimestamp(new Date(summary.date)) : '').toLowerCase();
+            const chatId = (summary.chatId || '').toLowerCase(); // 新しく追加
 
-            return filename.includes(lowerCaseSearchTerm) ||
-                   title.includes(lowerCaseSearchTerm) ||
-                   date.includes(lowerCaseSearchTerm);
+            return title.includes(lowerCaseSearchTerm) ||
+                   date.includes(lowerCaseSearchTerm) ||
+                   chatId.includes(lowerCaseSearchTerm); // chatIdも検索対象に
         });
 
         filteredSummaries.sort((a, b) => {
@@ -1863,8 +1894,13 @@
             const listItem = document.createElement('li');
             const displayDate = summary.date ? formatTimestamp(new Date(summary.date)) : '不明な日時';
             
+            // ★変更：data-filename ではなく data-chatid を使用。chatIdがなければ生成
+            if (!summary.chatId) { // 既存の古いデータに chatId がない場合のフォールバック
+                summary.chatId = crypto.randomUUID();
+                // この変更を allChatSummaries に反映するために、必要であれば saveAllChatSummariesToStorage() を呼ぶ
+            }
             listItem.innerHTML = `
-                <input type="checkbox" class="history-item-checkbox" data-filename="${summary.filename}">
+                <input type="checkbox" class="history-item-checkbox" data-chatid="${summary.chatId}">
                 <div class="history-item-content">
                     <div class="title">${summary.title}</div>
                     <div class="date-time">${displayDate}</div>
@@ -1876,8 +1912,9 @@
     }
     
     // グローバル変数からチャット概要を削除する
-    function deleteChatSummaryByFilename(filenameToDelete) {
-        allChatSummaries = allChatSummaries.filter(summary => summary.filename !== filenameToDelete);
+    // ★変更：deleteChatSummaryByFilename を deleteChatSummaryByChatId に改名
+    function deleteChatSummaryByChatId(chatIdToDelete) {
+        allChatSummaries = allChatSummaries.filter(summary => summary.chatId !== chatIdToDelete); // ★変更：chatId でフィルター
         displayChatHistoryList(chatHistorySearchInput.value, currentSortBy, currentSortOrder);
     }
 
@@ -1897,6 +1934,7 @@
         updateDeleteButtonVisibility();
 
         currentActiveSummaryData = summaryData;
+        currentChatUniqueId = summaryData.chatId; // ★追加：読み込んだチャットのIDを設定
         printPdfButton.style.display = 'inline-flex';
     }
 
@@ -2221,19 +2259,30 @@
                     const mergedSummaries = [...existingSummaries];
 
                     importedSummaries.forEach(importedSummary => {
+                        // ★変更：chatId がないデータには新しく生成
+                        if (!importedSummary.chatId) {
+                            importedSummary.chatId = crypto.randomUUID();
+                        }
+                        // ★変更：chatId を使って既存の履歴を検索
                         const existingIndex = mergedSummaries.findIndex(
-                            s => s.filename === importedSummary.filename
+                            s => s.chatId === importedSummary.chatId
                         );
                         if (existingIndex > -1) {
-                            mergedSummaries[existingIndex] = importedSummary;
+                            mergedSummaries[existingIndex] = importedSummary; // 既存の履歴を更新
                         } else {
-                            mergedSummaries.push(importedSummary);
+                            mergedSummaries.push(importedSummary); // 新しい履歴として追加
                         }
                     });
                     allChatSummaries = mergedSummaries; // グローバル変数を更新
                     alert('チャット履歴をマージしました。');
 
                 } else {
+                    // ★変更：インポートされた履歴に chatId がない場合に対応
+                    importedSummaries.forEach(importedSummary => {
+                        if (!importedSummary.chatId) {
+                            importedSummary.chatId = crypto.randomUUID();
+                        }
+                    });
                     allChatSummaries = importedSummaries; // グローバル変数を上書き
                     alert('チャット履歴を上書きしました。');
                 }
