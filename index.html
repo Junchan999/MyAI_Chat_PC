@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ＭｙAIChat_PC_220</title>
+    <title>ＭｙAIChat_PC</title>
     <style>
         html {
             height: 100%;
@@ -816,7 +816,7 @@
 <body>
 
 <header>
-    <h1>MyAI Chat History Ver2.20(ファイル保存版)</h1> <!-- タイトルに追記 -->
+    <h1>MyAI Chat History Ver2.40(ファイル保存版)</h1> <!-- タイトルに追記 -->
     <div class="header-controls">
         <div class="header-buttons">
             <button id="persona-button">各種設定</button>
@@ -906,7 +906,7 @@
             <div id="ai-response-settings" class="tab-pane">
                 <div class="settings-columns">
                     <div class="settings-column">
-                        <h3>AIの性格（システムプロンプト）</h3>
+                        <h3>AIの性格（ペルソナ_メタプロンプト）</h3>
                         <p>AIの振る舞いを指定する指示を入力してください。</p>
                         <textarea id="persona-textarea" placeholder="例：あなたは親切でフレンドリーなアシスタントです。絵文字をたくさん使って、ユーザーを励ましてください。"></textarea>
                         <div class="examples-container">
@@ -2610,15 +2610,18 @@
         return true;
     }
     
+    // 【★★修正箇所★★】
     // ファイルダウンロードを汎用関数化
     function downloadFile(content, filename, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
+        // BOM (Byte Order Mark) を先頭に付与し、Excelなどでの文字化けを防ぐ
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+        const blob = new Blob([bom, content], { type: mimeType });
         const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob); 
+        link.href = URL.createObjectURL(blob);
         link.download = filename;
-        document.body.appendChild(link); 
+        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link); 
+        document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
     }
     
@@ -2732,7 +2735,10 @@
         if (!selectedMessage) return;
 
         editingMessageElement = selectedMessage;
-        const messageText = selectedMessage.querySelector('.message-content-text')?.textContent || '';
+        
+        // ★★★ 修正箇所 ★★★
+        // textContent を innerText に変更して、表示されている通りの改行を取得します。
+        const messageText = selectedMessage.querySelector('.message-content-text')?.innerText || '';
 
         editMessageTextarea.value = messageText;
         editMessageModal.style.display = 'block';
